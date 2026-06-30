@@ -356,6 +356,7 @@ public partial class MainWindow : Window
             _selectedRegion = null;
         }
         UpdateGpuWarning();
+        PreviewTimer_Tick(null, EventArgs.Empty);
     }
 
     private void UpdateGpuWarning()

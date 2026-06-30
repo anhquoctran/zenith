@@ -13,7 +13,7 @@
 
     <TrayIcon.Icons>
         <TrayIcons>
-            <TrayIcon ToolTipText="Zenith Screen Recorder">
+            <TrayIcon ToolTipText="Zenith Screen Recorder" Icon="/Assets/logo.png">
                 <TrayIcon.Menu>
                     <NativeMenu>
                         <NativeMenuItem Header="Show Main Window" Click="NativeMenuItem_Show_Click" />

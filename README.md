@@ -1,5 +1,9 @@
 # Zenith
 
+<p align="center">
+  <img src="src/Zenith.UI/Assets/logo.png" width="128" alt="Zenith Logo"/>
+</p>
+
 Zenith is a modern, cross-platform screen recording application built with Avalonia UI and .NET 10. It utilizes FFmpeg for high-performance video encoding.
 
 ![Zenith Screenshot](screenshots/sc_01.png)
