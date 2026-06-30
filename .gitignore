@@ -436,7 +436,7 @@ FodyWeavers.xsd
 records.db
 
 # Zenith native build output
-/Zenith.Interop/zenith_native.dll
-/Zenith.Interop/zenith_native.lib
-/Zenith.Interop/zenith_native.exp
-/Zenith.Interop/zenith_native.obj
+/src/Zenith.Interop/zenith_native.dll
+/src/Zenith.Interop/zenith_native.lib
+/src/Zenith.Interop/zenith_native.exp
+/src/Zenith.Interop/zenith_native.obj

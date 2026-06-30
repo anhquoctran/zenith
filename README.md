@@ -10,10 +10,12 @@ Zenith is a modern, cross-platform screen recording application built with Avalo
 - **Audio Capture:** Real-time waveform visualization.
 
 ## Architecture
-- `Zenith.Core`: Core domain models and interfaces.
-- `Zenith.Data`: Local database integration (SQLite) for recording history.
-- `Zenith.Interop`: Platform-specific integrations, hardware enumerators, and FFmpeg engine wrappers.
-- `Zenith.UI`: The main Avalonia UI application.
+All projects reside under the `src/` directory:
+- `src/Zenith.Core`: Core domain models and interfaces.
+- `src/Zenith.Data`: Local database integration (SQLite) for recording history.
+- `src/Zenith.Interop`: Platform-specific integrations, C++ native source enumeration library, and FFmpeg engine wrappers.
+- `src/Zenith.UI`: The main Avalonia UI application.
+- `src/TestFfmpegApp` / `src/TestRunner`: Test utilities and runners.
 
 ## Installation
 Currently, Zenith is in active development. Once stable releases are available, you will be able to install it by following these steps:
@@ -29,7 +31,7 @@ Currently, Zenith is in active development. Once stable releases are available, 
 Ensure you have the .NET 10 SDK installed.
 
 1. Clone the repository.
-2. Open `Zenith.sln` in your preferred IDE (Visual Studio, Rider, VS Code).
+2. Open `src/Zenith.slnx` in your preferred IDE (Visual Studio, Rider, VS Code).
 3. Set `Zenith.UI` as the startup project.
 4. Run the application!
 
@@ -39,22 +41,22 @@ To build standalone executables for different operating systems, use the `.NET C
 
 ### Windows (x64)
 ```bash
-dotnet publish Zenith.UI/Zenith.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish src/Zenith.UI/Zenith.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
 ### macOS
 For Intel Macs (x64):
 ```bash
-dotnet publish Zenith.UI/Zenith.UI.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish src/Zenith.UI/Zenith.UI.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true
 ```
 For Apple Silicon (ARM64):
 ```bash
-dotnet publish Zenith.UI/Zenith.UI.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+dotnet publish src/Zenith.UI/Zenith.UI.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
 ```
 
 ### Linux (Ubuntu, Fedora, etc.)
 ```bash
-dotnet publish Zenith.UI/Zenith.UI.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish src/Zenith.UI/Zenith.UI.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true
 ```
 *Note for Linux users: You may need to install standard Avalonia dependencies (like libX11, GTK) depending on your distro.*
 

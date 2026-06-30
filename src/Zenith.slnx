@@ -6,4 +6,6 @@
   <Project Path="Zenith.PoC.macOS/Zenith.PoC.macOS.csproj" />
   <Project Path="Zenith.PoC.Windows/Zenith.PoC.Windows.csproj" />
   <Project Path="Zenith.UI/Zenith.UI.csproj" />
+  <Project Path="TestFfmpegApp/TestFfmpegApp.csproj" />
+  <Project Path="TestRunner/TestRunner.csproj" />
 </Solution>

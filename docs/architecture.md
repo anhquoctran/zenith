@@ -37,39 +37,43 @@ Zenith/
 ├── lib/                       # Third-party native libraries
 │   └── ffmpeg/                # FFmpeg native DLLs (Master/v63+ builds)
 │
-├── Zenith.Core/               # Abstractions Layer
-│   ├── IDeviceEnumerator.cs   # Interface for enumerating displays/webcams/audio sources
-│   ├── IHotkeyService.cs      # Interface for global hotkey registration
-│   ├── IPermissionService.cs  # Interface for checking device permissions
-│   ├── IRecorderEngine.cs     # Interface controlling the screen recorder engine
-│   └── MockRecorderEngine.cs  # Mock engine for debugging/testing
-│
-├── Zenith.Data/               # Database Access Layer
-│   ├── Record.cs              # History entry entity definition
-│   ├── RecordRepository.cs    # Repository using SQLite with Dapper
-│   └── Zenith.Data.csproj
-│
-├── Zenith.Interop/            # Native APIs & FFmpeg Interop Layer
-│   ├── AudioCaptureEngine.cs  # Audio recording implementation via NAudio
-│   ├── FFmpegRecorderEngine.cs# Screen recorder using WinRT Capture & FFmpeg
-│   ├── WindowsDeviceEnumerator.cs # Enumerator for Windows via DXGI & WMI
-│   ├── WindowsHotkeyService.cs    # Windows global hotkey hook (RegisterHotKey)
-│   ├── PermissionServices.cs      # Windows permission checker
-│   └── Zenith.Interop.csproj
-│
-├── Zenith.UI/                 # Avalonia UI App Presentation
-│   ├── Assets/                # Local images and icons
-│   ├── App.axaml              # Application configuration, styles, and themes
-│   ├── MainWindow.axaml       # Primary application window
-│   ├── RecordingWidget.axaml  # Floating mini toolbar during recording
-│   ├── CountdownOverlay.axaml # 3-2-1 countdown screen overlay
-│   └── RegionSelectOverlay.axaml # Overlay for selecting a custom capture region
-│
-├── Zenith.PoC.Windows/        # Proof of Concept for Windows-specific features
-├── Zenith.PoC.Linux/          # Proof of Concept for Linux (X11/Wayland)
-├── Zenith.PoC.macOS/          # Proof of Concept for macOS (AVFoundation)
-├── TestRunner/                # Console application for isolated interop tests
-└── Zenith.slnx                # Visual Studio Solution description file
+└── src/                       # Source code root
+    ├── Zenith.slnx            # Visual Studio Solution description file
+    │
+    ├── Zenith.Core/           # Abstractions Layer
+    │   ├── IDeviceEnumerator.cs   # Interface for enumerating displays/webcams/audio sources
+    │   ├── IHotkeyService.cs      # Interface for global hotkey registration
+    │   ├── IPermissionService.cs  # Interface for checking device permissions
+    │   ├── IRecorderEngine.cs     # Interface controlling the screen recorder engine
+    │   └── MockRecorderEngine.cs  # Mock engine for debugging/testing
+    │
+    ├── Zenith.Data/           # Database Access Layer
+    │   ├── Record.cs              # History entry entity definition
+    │   ├── RecordRepository.cs    # Repository using SQLite with Dapper
+    │   └── Zenith.Data.csproj
+    │
+    ├── Zenith.Interop/        # Native APIs & FFmpeg Interop Layer
+    │   ├── AudioCaptureEngine.cs  # Audio recording implementation via NAudio
+    │   ├── FFmpegRecorderEngine.cs# Screen recorder using WinRT Capture & FFmpeg
+    │   ├── WindowsDeviceEnumerator.cs # Enumerator for Windows via native C++ library
+    │   ├── WindowsHotkeyService.cs    # Windows global hotkey hook (RegisterHotKey)
+    │   ├── PermissionServices.cs      # Windows permission checker
+    │   ├── zenith_native.cpp          # Native C++ source enumerator helper
+    │   └── Zenith.Interop.csproj
+    │
+    ├── Zenith.UI/             # Avalonia UI App Presentation
+    │   ├── Assets/                # Local images and icons
+    │   ├── App.axaml              # Application configuration, styles, and themes
+    │   ├── MainWindow.axaml       # Primary application window
+    │   ├── RecordingWidget.axaml  # Floating mini toolbar during recording
+    │   ├── CountdownOverlay.axaml # 3-2-1 countdown screen overlay
+    │   └── RegionSelectOverlay.axaml # Overlay for selecting a custom capture region
+    │
+    ├── Zenith.PoC.Windows/    # Proof of Concept for Windows-specific features
+    ├── Zenith.PoC.Linux/      # Proof of Concept for Linux (X11/Wayland)
+    ├── Zenith.PoC.macOS/      # Proof of Concept for macOS (AVFoundation)
+    ├── TestFfmpegApp/         # C# test app for FFmpeg features
+    └── TestRunner/            # Console application for isolated interop tests
 ```
 
 ---
