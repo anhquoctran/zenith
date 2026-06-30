@@ -1,0 +1,17 @@
+D:\DemoProject\Zenith\Zenith.PoC.macOS\bin\Debug\net10.0\Zenith.PoC.macOS.exe
+D:\DemoProject\Zenith\Zenith.PoC.macOS\bin\Debug\net10.0\Zenith.PoC.macOS.deps.json
+D:\DemoProject\Zenith\Zenith.PoC.macOS\bin\Debug\net10.0\Zenith.PoC.macOS.runtimeconfig.json
+D:\DemoProject\Zenith\Zenith.PoC.macOS\bin\Debug\net10.0\Zenith.PoC.macOS.dll
+D:\DemoProject\Zenith\Zenith.PoC.macOS\bin\Debug\net10.0\Zenith.PoC.macOS.pdb
+D:\DemoProject\Zenith\Zenith.PoC.macOS\bin\Debug\net10.0\FFmpeg.AutoGen.dll
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.csproj.AssemblyReference.cache
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.GeneratedMSBuildEditorConfig.editorconfig
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.AssemblyInfoInputs.cache
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.AssemblyInfo.cs
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.csproj.CoreCompileInputs.cache
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.P.23095FD3.Up2Date
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.dll
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\refint\Zenith.PoC.macOS.dll
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.pdb
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.genruntimeconfig.cache
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\ref\Zenith.PoC.macOS.dll

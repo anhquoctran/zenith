@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "Zenith.PoC.macOS/1.0.0": {
+        "dependencies": {
+          "FFmpeg.AutoGen": "8.1.0"
+        },
+        "runtime": {
+          "Zenith.PoC.macOS.dll": {}
+        }
+      },
+      "FFmpeg.AutoGen/8.1.0": {
+        "runtime": {
+          "lib/netstandard2.1/FFmpeg.AutoGen.dll": {
+            "assemblyVersion": "8.1.0.0",
+            "fileVersion": "8.1.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Zenith.PoC.macOS/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FFmpeg.AutoGen/8.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-j7YbmE4QGst6OPk0w1D/EMBv7Ig1CoCnAVtSEYh/88q9MAVEzhu3FjgVFGYqH83jhz2opvaqZe90qG73RLMBWQ==",
+      "path": "ffmpeg.autogen/8.1.0",
+      "hashPath": "ffmpeg.autogen.8.1.0.nupkg.sha512"
+    }
+  }
+}

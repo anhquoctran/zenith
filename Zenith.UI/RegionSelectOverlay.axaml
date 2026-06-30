@@ -1,0 +1,16 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Zenith.UI.RegionSelectOverlay"
+        WindowDecorations="None"
+        Topmost="True"
+        Background="#80000000"
+        TransparencyLevelHint="Transparent"
+        Cursor="Cross"
+        PointerPressed="Window_PointerPressed"
+        PointerMoved="Window_PointerMoved"
+        PointerReleased="Window_PointerReleased">
+    
+    <Canvas x:Name="OverlayCanvas">
+        <Rectangle x:Name="SelectionRectangle" Stroke="#007ACC" StrokeThickness="2" Fill="#20007ACC" IsVisible="False"/>
+    </Canvas>
+</Window>

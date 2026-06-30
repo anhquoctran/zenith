@@ -1,0 +1,12 @@
+D:\DemoProject\Zenith\Zenith.Data\bin\Debug\net10.0\Zenith.Data.deps.json
+D:\DemoProject\Zenith\Zenith.Data\bin\Debug\net10.0\Zenith.Data.dll
+D:\DemoProject\Zenith\Zenith.Data\bin\Debug\net10.0\Zenith.Data.pdb
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\Zenith.Data.csproj.AssemblyReference.cache
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\Zenith.Data.GeneratedMSBuildEditorConfig.editorconfig
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\Zenith.Data.AssemblyInfoInputs.cache
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\Zenith.Data.AssemblyInfo.cs
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\Zenith.Data.csproj.CoreCompileInputs.cache
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\Zenith.Data.dll
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\refint\Zenith.Data.dll
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\Zenith.Data.pdb
+D:\DemoProject\Zenith\Zenith.Data\obj\Debug\net10.0\ref\Zenith.Data.dll

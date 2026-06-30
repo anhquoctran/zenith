@@ -1,0 +1,15 @@
+D:\DemoProject\Zenith\Zenith.Core\bin\Debug\net10.0\Zenith.Core.deps.json
+D:\DemoProject\Zenith\Zenith.Core\bin\Debug\net10.0\Zenith.Core.dll
+D:\DemoProject\Zenith\Zenith.Core\bin\Debug\net10.0\Zenith.Core.pdb
+D:\DemoProject\Zenith\Zenith.Core\bin\Debug\net10.0\Zenith.Data.dll
+D:\DemoProject\Zenith\Zenith.Core\bin\Debug\net10.0\Zenith.Data.pdb
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.csproj.AssemblyReference.cache
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.AssemblyInfoInputs.cache
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.AssemblyInfo.cs
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.csproj.CoreCompileInputs.cache
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.C.E9B6022C.Up2Date
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.dll
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\refint\Zenith.Core.dll
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.pdb
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\ref\Zenith.Core.dll

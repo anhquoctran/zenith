@@ -1,0 +1,17 @@
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.csproj.AssemblyReference.cache
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.GeneratedMSBuildEditorConfig.editorconfig
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.AssemblyInfoInputs.cache
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.AssemblyInfo.cs
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.csproj.CoreCompileInputs.cache
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.deps.json
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.pdb
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0-windows10.0.19041.0\Zenith.Core.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0-windows10.0.19041.0\Zenith.Data.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0-windows10.0.19041.0\Zenith.Core.pdb
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0-windows10.0.19041.0\Zenith.Data.pdb
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\Zenith.I.D1F71481.Up2Date
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.dll
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\refint\Zenith.Interop.dll
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\Zenith.Interop.pdb
+D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0-windows10.0.19041.0\ref\Zenith.Interop.dll

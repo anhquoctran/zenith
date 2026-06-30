@@ -1,0 +1,55 @@
+name: Publish Zenith
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            rid: win-x64
+            ext: .exe
+          - os: ubuntu-latest
+            rid: linux-x64
+            ext: ""
+          - os: macos-latest
+            rid: osx-x64
+            ext: ""
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Publish
+      run: dotnet publish Zenith.UI/Zenith.UI.csproj -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
+
+    - name: Zip Artifact
+      run: Compress-Archive -Path ./publish/* -DestinationPath Zenith-${{ matrix.rid }}.zip
+      if: runner.os == 'Windows'
+
+    - name: Tar Artifact
+      run: tar -czvf Zenith-${{ matrix.rid }}.tar.gz -C ./publish .
+      if: runner.os != 'Windows'
+
+    - name: Upload Release Asset (Windows)
+      if: github.event_name == 'release' && runner.os == 'Windows'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: Zenith-${{ matrix.rid }}.zip
+
+    - name: Upload Release Asset (Linux/macOS)
+      if: github.event_name == 'release' && runner.os != 'Windows'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: Zenith-${{ matrix.rid }}.tar.gz
