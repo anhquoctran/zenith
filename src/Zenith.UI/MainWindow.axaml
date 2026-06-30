@@ -10,7 +10,6 @@
         MinHeight="850"
         MinWidth="900"
         WindowStartupLocation="CenterScreen"
-        WindowState="Maximized"
         Background="#1E1E1E"
         TransparencyLevelHint="Mica"
         ExtendClientAreaToDecorationsHint="True">
@@ -52,7 +51,7 @@
                 </ComboBox>
                 
                 <TextBlock Text="Camera" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
-                <ComboBox x:Name="CameraComboBox" SelectedIndex="0" HorizontalAlignment="Stretch">
+                <ComboBox x:Name="CameraComboBox" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="CameraComboBox_SelectionChanged">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="core:WebcamSource">
                             <TextBlock Text="{Binding Name}" />
@@ -69,8 +68,7 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-                <TextBlock Text="Audio Waveform" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
-                <Border Background="#1A1A1A" CornerRadius="8" Height="100">
+                <Border Background="#1A1A1A" CornerRadius="8" Height="60" Margin="0,10,0,0">
                     <Canvas x:Name="WaveformCanvas" ClipToBounds="True">
                         <!-- Waveform drawn here via code-behind -->
                     </Canvas>
@@ -95,7 +93,7 @@
                 <TextBlock Text="Save Location" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBox x:Name="SaveLocationTextBox" Grid.Column="0" IsReadOnly="True" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" Content="..." Click="SelectFolder_Click" Classes="accent" VerticalAlignment="Center"/>
+                    <Button x:Name="SelectFolderButton" Grid.Column="1" Content="..." Click="SelectFolder_Click" Classes="accent" VerticalAlignment="Center"/>
                 </Grid>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,20,0,0">
@@ -128,7 +126,12 @@
                 <TextBlock Grid.Row="0" Text="Preview" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,10"/>
             
                 <Border Grid.Row="1" Background="#252526" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" MinHeight="300" MaxHeight="500" Margin="0,0,0,20" ClipToBounds="True">
-                    <Image x:Name="PreviewImage" Stretch="Uniform" />
+                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Image x:Name="PreviewImage" Stretch="Uniform" />
+                        <Border x:Name="CameraPreviewOverlay" IsVisible="False" CornerRadius="8" BorderBrush="#555555" BorderThickness="2" Width="160" Height="90" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10" ClipToBounds="True">
+                            <Image x:Name="CameraPreviewImage" Stretch="UniformToFill" />
+                        </Border>
+                    </Grid>
                 </Border>
             </Grid>
 

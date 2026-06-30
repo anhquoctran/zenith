@@ -13,7 +13,7 @@ namespace Zenith.Interop;
 
 public class WindowsDeviceEnumerator : IDeviceEnumerator
 {
-    [DllImport("zenith_native.dll", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("zenith_native", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr GetAvailableSources();
 
     private class NativeSource
@@ -22,6 +22,8 @@ public class WindowsDeviceEnumerator : IDeviceEnumerator
         public string DisplayName { get; set; } = string.Empty;
         public string Resolution { get; set; } = string.Empty;
         public string SourceType { get; set; } = string.Empty;
+        public int X { get; set; }
+        public int Y { get; set; }
     }
 
     private static List<NativeSource> LoadNativeSources()
@@ -72,8 +74,8 @@ public class WindowsDeviceEnumerator : IDeviceEnumerator
                     Id = ns.SourceID,
                     Width = width,
                     Height = height,
-                    X = 0,
-                    Y = 0,
+                    X = ns.X,
+                    Y = ns.Y,
                     OwningGpuId = "Auto"
                 });
             }

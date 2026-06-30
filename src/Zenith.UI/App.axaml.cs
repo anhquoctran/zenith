@@ -31,6 +31,14 @@ public partial class App : Application
         }
     }
 
+    private void NativeMenuItem_Stop_Click(object? sender, EventArgs e)
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow is MainWindow mainWindow)
+        {
+            _ = mainWindow.StopRecordingAsync();
+        }
+    }
+
     private void NativeMenuItem_Exit_Click(object? sender, EventArgs e)
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

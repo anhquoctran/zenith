@@ -1,39 +1,62 @@
 <Project Sdk="Microsoft.NET.Sdk">
- 
-   <ItemGroup>
-     <ProjectReference Include="..\Zenith.Core\Zenith.Core.csproj" />
-   </ItemGroup>
- 
-   <ItemGroup>
-     <PackageReference Include="FFmpeg.AutoGen" Version="8.1.0" />
-     <PackageReference Include="NAudio.Core" Version="2.3.0" />
-     <PackageReference Include="NAudio.Wasapi" Version="2.3.0" />
-   </ItemGroup>
- 
-   <PropertyGroup>
-     <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0</TargetFrameworks>
-     <ImplicitUsings>enable</ImplicitUsings>
-     <Nullable>enable</Nullable>
-     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</SupportedOSPlatformVersion>
-   </PropertyGroup>
- 
-   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
-     <PackageReference Include="Vortice.Direct3D11" Version="3.5.0" />
-     <PackageReference Include="Vortice.DXGI" Version="3.5.0" />
-     <PackageReference Include="System.Management" Version="8.0.0" />
-   </ItemGroup>
- 
-   <ItemGroup>
-     <Content Include="..\..\lib\ffmpeg\win-x64\*.dll">
-       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-     </Content>
-     <None Include="zenith_native.dll">
-       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-     </None>
-   </ItemGroup>
 
-   <Target Name="BuildNativeDll" BeforeTargets="BeforeBuild" Condition="'$(OS)' == 'Windows_NT' And '$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
-     <Exec Command="cmd.exe /c &quot;call &quot;C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat&quot; &amp;&amp; cl.exe /LD /EHsc /O2 &quot;$(MSBuildProjectDirectory)\zenith_native.cpp&quot; /Fe:&quot;$(MSBuildProjectDirectory)\zenith_native.dll&quot; /Fo:&quot;$(MSBuildProjectDirectory)\zenith_native.obj&quot;&quot;" />
-   </Target>
- </Project>
+  <ItemGroup>
+    <ProjectReference Include="..\Zenith.Core\Zenith.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FFmpeg.AutoGen" Version="8.1.0" />
+    <PackageReference Include="NAudio.Core" Version="2.3.0" />
+    <PackageReference Include="NAudio.Wasapi" Version="2.3.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <PackageReference Include="Vortice.Direct3D11" Version="3.5.0" />
+    <PackageReference Include="Vortice.DXGI" Version="3.5.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\lib\ffmpeg\win-x64\*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <None Include="zenith_native.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <None Include="libzenith_native.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <None Include="libzenith_native.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="BuildNativeDll" BeforeTargets="BeforeBuild" Condition="'$(OS)' == 'Windows_NT' And '$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <Exec Command="cmd.exe /c &quot;call &quot;C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat&quot; &amp;&amp; cl.exe /LD /EHsc /O2 &quot;$(MSBuildProjectDirectory)\zenith_native.cpp&quot; /Fe:&quot;$(MSBuildProjectDirectory)\zenith_native.dll&quot; /Fo:&quot;$(MSBuildProjectDirectory)\zenith_native.obj&quot;&quot;" />
+  </Target>
+
+  <Target Name="BuildNativeSo" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$(TargetFramework)' == 'net10.0'">
+    <Exec Command="g++ -shared -fPIC -O2 &quot;$(MSBuildProjectDirectory)/zenith_native.cpp&quot; -o &quot;$(MSBuildProjectDirectory)/libzenith_native.so&quot;" />
+  </Target>
+
+  <Target Name="BuildNativeDylib" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$(TargetFramework)' == 'net10.0'">
+    <Exec Command="clang++ -shared -fPIC -O2 &quot;$(MSBuildProjectDirectory)/zenith_native.cpp&quot; -o &quot;$(MSBuildProjectDirectory)/libzenith_native.dylib&quot;" />
+  </Target>
+</Project>

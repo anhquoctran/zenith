@@ -55,12 +55,8 @@ public partial class RecordingWidget : Window
         }
     }
 
-    private async void StopButton_Click(object? sender, RoutedEventArgs e)
+    private void StopButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (_engine != null)
-        {
-            await _engine.StopAsync();
-        }
         this.Close();
     }
 }

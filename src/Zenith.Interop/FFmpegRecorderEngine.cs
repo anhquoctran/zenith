@@ -26,7 +26,6 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
     private AVFilterContext* _buffersrcCtxDesktop = null;
     private AVFilterContext* _buffersrcCtxWebcam = null;
     private AVFilterContext* _buffersinkCtx = null;
-    private WebcamCaptureEngine? _webcamEngine;
     
     private RecordingConfig? _config;
     private AVFormatContext* _fmtCtx = null;
@@ -103,7 +102,6 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             ffmpeg.LibraryVersionMap["swscale"] = 10;
 
             ffmpeg.RootPath = AppContext.BaseDirectory;
-            ffmpeg.avdevice_register_all();
 
             IDXGIAdapter1? selectedAdapter = null;
             DXGI.CreateDXGIFactory1(out IDXGIFactory1? factory).CheckError();
@@ -147,26 +145,20 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 }
             }
 
-            Vortice.Direct3D11.D3D11.D3D11CreateDevice(
+			D3D11.D3D11CreateDevice(
                 selectedAdapter,
                 selectedAdapter != null ? DriverType.Unknown : DriverType.Hardware,
                 DeviceCreationFlags.BgraSupport | DeviceCreationFlags.VideoSupport,
-                new[] { FeatureLevel.Level_11_1 },
-                out Vortice.Direct3D11.ID3D11Device? device, out Vortice.Direct3D11.ID3D11DeviceContext? context).CheckError();
+                [FeatureLevel.Level_11_1],
+                out var device, out Vortice.Direct3D11.ID3D11DeviceContext? context).CheckError();
             
             _d3dDevice = device;
 
-            if (selectedAdapter != null)
-            {
-                selectedAdapter.Dispose();
-            }
-            if (factory != null)
-            {
-                factory.Dispose();
-            }
+            selectedAdapter?.Dispose();
+            factory?.Dispose();
 
             var dxgiDevice = _d3dDevice!.QueryInterface<IDXGIDevice>();
-            CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.NativePointer, out var pUnknown);
+            _ = CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.NativePointer, out var pUnknown);
             _winrtDevice = WinRT.MarshalInterface<IDirect3DDevice>.FromAbi(pUnknown);
         }
         catch (Exception ex)
@@ -177,10 +169,6 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 
         if (config.EnableWebcam)
         {
-            _webcamEngine = new WebcamCaptureEngine();
-            var deviceName = string.IsNullOrEmpty(config.WebcamDeviceName) ? "video=Integrated Webcam" : config.WebcamDeviceName;
-            _webcamEngine.Start(deviceName);
-
             // Scaffold AVFilter Graph for PiP (Picture-in-Picture)
             _filterGraph = ffmpeg.avfilter_graph_alloc();
             var filterArgs = "[in_desktop] [in_webcam] overlay=W-w-10:H-h-10 [out]";
@@ -362,12 +350,12 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     Height = outputH,
                     MipLevels = 1,
                     ArraySize = 1,
-                    Format = Vortice.DXGI.Format.B8G8R8A8_UNorm,
+                    Format = Format.B8G8R8A8_UNorm,
                     SampleDescription = new Vortice.DXGI.SampleDescription(1, 0),
-                    Usage = Vortice.Direct3D11.ResourceUsage.Staging,
-                    BindFlags = Vortice.Direct3D11.BindFlags.None,
-                    CPUAccessFlags = Vortice.Direct3D11.CpuAccessFlags.Read,
-                    MiscFlags = Vortice.Direct3D11.ResourceOptionFlags.None
+                    Usage = ResourceUsage.Staging,
+                    BindFlags = BindFlags.None,
+                    CPUAccessFlags = CpuAccessFlags.Read,
+                    MiscFlags = ResourceOptionFlags.None
                 });
 
                 // sws input = outputW x outputH (we crop to this size before color conversion)
@@ -455,7 +443,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     int cropY = 0;
                     d3dContext.CopySubresourceRegion(_stagingTexture, 0, 0, 0, 0, texture, 0, new Box(cropX, cropY, 0, cropX + _config.Width, cropY + _config.Height, 1));
                     
-                    var mapped = d3dContext.Map(_stagingTexture, 0, Vortice.Direct3D11.MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+                    var mapped = d3dContext.Map(_stagingTexture, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
                     
                     AVFrame* avFrame = ffmpeg.av_frame_alloc();
                     avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_YUV420P;
@@ -571,7 +559,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 if (_codecCtx != null)
                 {
                     ffmpeg.avcodec_send_frame(_codecCtx, null);
-                    AVPacket* pkt = ffmpeg.av_packet_alloc();
+                    var pkt = ffmpeg.av_packet_alloc();
                     while (ffmpeg.avcodec_receive_packet(_codecCtx, pkt) == 0)
                     {
                         ffmpeg.av_packet_rescale_ts(pkt, _codecCtx->time_base, _videoStream->time_base);
@@ -593,7 +581,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 
                 if (_codecCtx != null)
                 {
-                    AVCodecContext* codecCtx = _codecCtx;
+                    var codecCtx = _codecCtx;
                     ffmpeg.avcodec_free_context(&codecCtx);
                     _codecCtx = null;
                 }
@@ -638,7 +626,5 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             }
             _filterGraph = null;
         }
-
-        _webcamEngine?.Dispose();
     }
 }

@@ -17,6 +17,7 @@
                 <TrayIcon.Menu>
                     <NativeMenu>
                         <NativeMenuItem Header="Show Main Window" Click="NativeMenuItem_Show_Click" />
+                        <NativeMenuItem Header="Stop Recording" Click="NativeMenuItem_Stop_Click" />
                         <NativeMenuItemSeparator />
                         <NativeMenuItem Header="Exit" Click="NativeMenuItem_Exit_Click" />
                     </NativeMenu>

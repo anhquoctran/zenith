@@ -53,6 +53,8 @@ struct NativeSource {
     std::string DisplayName;
     std::string Resolution;
     std::string SourceType;
+    int X;
+    int Y;
 };
 
 // Callback for window enumeration
@@ -91,7 +93,9 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
         id.str(),
         Utf8Encode(title),
         res.str(),
-        "Window"
+        "Window",
+        (int)rect.left,
+        (int)rect.top
     });
     
     return TRUE;
@@ -126,7 +130,9 @@ extern "C" {
                         Utf8Encode(desc.DeviceName),
                         "Screen " + std::to_string(sources.size() + 1) + " (" + res.str() + ")",
                         res.str(),
-                        "Screen"
+                        "Screen",
+                        (int)desc.DesktopCoordinates.left,
+                        (int)desc.DesktopCoordinates.top
                     });
                     
                     output->Release();
@@ -174,7 +180,8 @@ extern "C" {
                             Utf8Encode(idStr),
                             friendlyName,
                             "",
-                            "AudioInput"
+                            "AudioInput",
+                            0, 0
                         });
                         
                         CoTaskMemFree(idStr);
@@ -211,7 +218,8 @@ extern "C" {
                             Utf8Encode(idStr),
                             "System Audio: " + friendlyName,
                             "",
-                            "AudioOutput"
+                            "AudioOutput",
+                            0, 0
                         });
                         
                         CoTaskMemFree(idStr);
@@ -252,7 +260,8 @@ extern "C" {
                                 symLink,
                                 friendlyName,
                                 "",
-                                "Webcam"
+                                "Webcam",
+                                0, 0
                             });
 
                             devices[i]->Release();
@@ -278,7 +287,9 @@ extern "C" {
                  << "\"SourceID\":\"" << EscapeJsonString(sources[i].SourceID) << "\","
                  << "\"DisplayName\":\"" << EscapeJsonString(sources[i].DisplayName) << "\","
                  << "\"Resolution\":\"" << EscapeJsonString(sources[i].Resolution) << "\","
-                 << "\"SourceType\":\"" << EscapeJsonString(sources[i].SourceType) << "\""
+                 << "\"SourceType\":\"" << EscapeJsonString(sources[i].SourceType) << "\","
+                 << "\"X\":" << sources[i].X << ","
+                 << "\"Y\":" << sources[i].Y
                  << "}";
         }
         json << "]";

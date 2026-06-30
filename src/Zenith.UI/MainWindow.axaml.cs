@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Zenith.Core;
 using Zenith.Data;
 using Zenith.Interop;
@@ -20,6 +21,9 @@ public partial class MainWindow : Window
 #if WINDOWS
     [DllImport("user32.dll")]
     private static extern IntPtr MonitorFromPoint(System.Drawing.Point pt, uint dwFlags);
+    [DllImport("user32.dll")]
+    private static extern uint SetWindowDisplayAffinity(IntPtr hWnd, uint dwAffinity);
+    private const uint WDA_EXCLUDEFROMCAPTURE = 0x00000011;
 #endif
     private RecordingWidget? _widget;
     private readonly AudioCaptureEngine _audioEngine;
@@ -33,6 +37,9 @@ public partial class MainWindow : Window
     private System.Drawing.Rectangle? _selectedRegion;
     private readonly DispatcherTimer _elapsedTimer;
     private DateTime _recordingStartTime;
+    private CameraOverlayWindow? _cameraOverlay;
+    private WebcamCaptureEngine? _sharedWebcamEngine;
+    private Avalonia.Media.Imaging.WriteableBitmap? _webcamBitmap;
 
     public MainWindow()
     {
@@ -86,6 +93,17 @@ public partial class MainWindow : Window
         
         Loaded += async (s, e) => 
         {
+#if WINDOWS
+            try
+            {
+                var handle = this.TryGetPlatformHandle()?.Handle;
+                if (handle.HasValue && handle.Value != IntPtr.Zero)
+                {
+                    SetWindowDisplayAffinity(handle.Value, WDA_EXCLUDEFROMCAPTURE);
+                }
+            }
+            catch { }
+#endif
             SaveLocationTextBox.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), Constants.OUTPUT_PREFIX_PATH);
             await _recordRepository.InitializeAsync();
             await LoadHistoryAsync();
@@ -107,11 +125,15 @@ public partial class MainWindow : Window
     private void PreviewTimer_Tick(object? sender, EventArgs e)
     {
         if (_recorderEngine == null || _recorderEngine.State != RecorderState.Idle)
-            return; // Don't steal CPU during active recording
+        {
+            PreviewImage?.Source = null;
+            return; // Paused preview to save memory
+        }
 
-		if (VideoSourceComboBox.SelectedItem is not VideoSource selectedVideo || selectedVideo.Id == "None" || (selectedVideo.Id != "Region" && selectedVideo.Width == 0))
+		if (VideoSourceComboBox == null || VideoSourceComboBox.SelectedItem is not VideoSource selectedVideo || selectedVideo.Id == "None" || (selectedVideo.Id != "Region" && selectedVideo.Width == 0))
 		{
-			PreviewImage.Source = null;
+			if (PreviewImage != null)
+			    PreviewImage.Source = null;
 			return;
 		}
 
@@ -136,7 +158,8 @@ public partial class MainWindow : Window
             using var ms = new MemoryStream();
             bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
             ms.Position = 0;
-            PreviewImage.Source = new Avalonia.Media.Imaging.Bitmap(ms);
+            if (PreviewImage != null)
+                PreviewImage.Source = new Avalonia.Media.Imaging.Bitmap(ms);
         }
         catch
         {
@@ -174,7 +197,7 @@ public partial class MainWindow : Window
         AudioSourceComboBox.SelectedIndex = 0;
     }
     
-    private async System.Threading.Tasks.Task LoadHistoryAsync()
+    private async Task LoadHistoryAsync()
     {
         var records = await _recordRepository.GetAllAsync();
         var recordList = new List<Record>(records);
@@ -232,6 +255,13 @@ public partial class MainWindow : Window
 
     private async void RecordButton_Click(object? sender, RoutedEventArgs e)
     {
+        VideoSourceComboBox.IsEnabled = false;
+        CameraComboBox.IsEnabled = false;
+        AudioSourceComboBox.IsEnabled = false;
+        HardwareAccelerationCheckBox.IsEnabled = false;
+        GpuComboBox.IsEnabled = false;
+        if (SelectFolderButton != null) SelectFolderButton.IsEnabled = false;
+
         var dir = SaveLocationTextBox.Text;
         if (string.IsNullOrEmpty(dir)) dir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
         Directory.CreateDirectory(dir);
@@ -285,17 +315,65 @@ public partial class MainWindow : Window
         _elapsedTimer.Start();
         ElapsedTimeText.IsVisible = true;
         
+        // Hide preview camera overlay, show actual window corner overlay
+        if (CameraPreviewOverlay != null)
+            CameraPreviewOverlay.IsVisible = false;
+        var selectedCamera = CameraComboBox.SelectedItem as WebcamSource;
+        if (selectedCamera != null && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None")
+        {
+            if (_cameraOverlay == null)
+            {
+                _cameraOverlay = new CameraOverlayWindow();
+                if (_webcamBitmap != null)
+                {
+                    _cameraOverlay.SetImageSource(_webcamBitmap);
+                }
+            }
+            _cameraOverlay.Show();
+        }
+
         RecordButton.IsEnabled = false;
         StopButton.IsEnabled = true;
+
+        // Hide main window and show widget to act as system tray/floating mode
+        ShowWidget_Click(null, null);
     }
 
-    private async void StopButton_Click(object? sender, RoutedEventArgs e)
+    private void StopButton_Click(object? sender, RoutedEventArgs e)
     {
+        _ = StopRecordingAsync();
+    }
+
+    public async Task StopRecordingAsync()
+    {
+        if (_recorderEngine == null || _recorderEngine.State == RecorderState.Idle) return;
+
         StopButton.IsEnabled = false;
+        VideoSourceComboBox.IsEnabled = true;
+        CameraComboBox.IsEnabled = true;
+        AudioSourceComboBox.IsEnabled = true;
+        HardwareAccelerationCheckBox.IsEnabled = true;
+        GpuComboBox.IsEnabled = true;
+        if (SelectFolderButton != null) SelectFolderButton.IsEnabled = true;
+
         _elapsedTimer.Stop();
         ElapsedTimeText.IsVisible = false;
         ElapsedTimeText.Text = "00:00:00";
         await _recorderEngine.StopAsync();
+        
+        // Hide window corner overlay, restore preview overlay
+        if (_cameraOverlay != null)
+        {
+            _cameraOverlay.Close();
+            _cameraOverlay = null;
+        }
+        var selectedCamera = CameraComboBox.SelectedItem as WebcamSource;
+        if (selectedCamera != null && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None")
+        {
+            if (CameraPreviewOverlay != null)
+                CameraPreviewOverlay.IsVisible = true;
+        }
+
         RecordButton.IsEnabled = true;
         
         await LoadHistoryAsync(); // Refresh history
@@ -310,6 +388,10 @@ public partial class MainWindow : Window
             {
                 _widget = null;
                 this.Show();
+                if (_recorderEngine != null && _recorderEngine.State != RecorderState.Idle)
+                {
+                    _ = StopRecordingAsync();
+                }
             };
         }
 
@@ -330,6 +412,54 @@ public partial class MainWindow : Window
             var saveFolder = Path.Combine(folders[0].Path.LocalPath, Constants.OUTPUT_PREFIX_PATH);
             SaveLocationTextBox.Text = saveFolder;
         }
+    }
+
+    private void AudioSourceComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+    }
+
+    private void OnWebcamFrameArrived(object? sender, FrameArrivedEventArgs e)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                if (_webcamBitmap == null || _webcamBitmap.PixelSize.Width != e.Width || _webcamBitmap.PixelSize.Height != e.Height)
+                {
+                    _webcamBitmap?.Dispose();
+                    _webcamBitmap = new Avalonia.Media.Imaging.WriteableBitmap(
+                        new Avalonia.PixelSize(e.Width, e.Height),
+                        new Avalonia.Vector(96, 96),
+                        Avalonia.Platform.PixelFormat.Bgra8888,
+                        Avalonia.Platform.AlphaFormat.Premul);
+                }
+
+                using (var fb = _webcamBitmap.Lock())
+                {
+                    int size = Math.Min(e.Stride * e.Height, e.DataArray.Length);
+                    System.Runtime.InteropServices.Marshal.Copy(e.DataArray, 0, fb.Address, size);
+                }
+
+                // Always ensure the source is bound (it may have been null if overlay was hidden during creation)
+                if (CameraPreviewImage != null && CameraPreviewImage.Source != _webcamBitmap)
+                    CameraPreviewImage.Source = _webcamBitmap;
+                
+                if (_cameraOverlay != null)
+                    _cameraOverlay.SetImageSource(_webcamBitmap);
+
+                // Force redraw
+                CameraPreviewImage?.InvalidateVisual();
+                _cameraOverlay?.InvalidateImage();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error rendering webcam frame: {ex.Message}");
+            }
+            finally
+            {
+                System.Buffers.ArrayPool<byte>.Shared.Return(e.DataArray);
+            }
+        });
     }
 
     private async void VideoSourceComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -359,6 +489,82 @@ public partial class MainWindow : Window
         }
         UpdateGpuWarning();
         PreviewTimer_Tick(null, EventArgs.Empty);
+    }
+
+    private void CameraComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        var comboBox = sender as ComboBox;
+        var selectedCamera = comboBox?.SelectedItem as WebcamSource;
+
+        bool hasCamera = selectedCamera != null && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None";
+        bool isRecording = _recorderEngine != null && _recorderEngine.State != RecorderState.Idle;
+
+        if (hasCamera)
+        {
+            if (isRecording)
+            {
+                if (CameraPreviewOverlay != null)
+                    CameraPreviewOverlay.IsVisible = false;
+                if (_cameraOverlay == null)
+                {
+                    _cameraOverlay = new CameraOverlayWindow();
+                    if (_webcamBitmap != null)
+                    {
+                        _cameraOverlay.SetImageSource(_webcamBitmap);
+                    }
+                }
+                _cameraOverlay.Show();
+            }
+            else
+            {
+                if (CameraPreviewOverlay != null)
+                    CameraPreviewOverlay.IsVisible = true;
+                if (_cameraOverlay != null)
+                {
+                    _cameraOverlay.Close();
+                    _cameraOverlay = null;
+                }
+            }
+
+            if (_sharedWebcamEngine == null)
+            {
+                _sharedWebcamEngine = new WebcamCaptureEngine();
+                _sharedWebcamEngine.FrameArrived += OnWebcamFrameArrived;
+                string devName = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ? "video=" + selectedCamera.Name : selectedCamera.Id;
+                
+                Task.Run(() => 
+                {
+                    try
+                    {
+                        _sharedWebcamEngine.Start(devName);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[MainWindow] Error starting webcam: {ex.Message}\n{ex.StackTrace}");
+                    }
+                });
+            }
+        }
+        else
+        {
+            if (_sharedWebcamEngine != null)
+            {
+                _sharedWebcamEngine.FrameArrived -= OnWebcamFrameArrived;
+                _sharedWebcamEngine.Dispose();
+                _sharedWebcamEngine = null;
+                
+                _webcamBitmap?.Dispose();
+                _webcamBitmap = null;
+            }
+
+            if (CameraPreviewOverlay != null)
+                CameraPreviewOverlay.IsVisible = false;
+            if (_cameraOverlay != null)
+            {
+                _cameraOverlay.Close();
+                _cameraOverlay = null;
+            }
+        }
     }
 
     private void UpdateGpuWarning()
@@ -392,9 +598,23 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        base.OnClosed(e);
+        _previewTimer?.Stop();
+        
+        if (_sharedWebcamEngine != null)
+        {
+            _sharedWebcamEngine.FrameArrived -= OnWebcamFrameArrived;
+            _sharedWebcamEngine.Dispose();
+            _sharedWebcamEngine = null;
+        }
+
+        if (_cameraOverlay != null)
+        {
+            _cameraOverlay.Close();
+            _cameraOverlay = null;
+        }
         _audioEngine.Stop();
         _audioEngine.Dispose();
         _recorderEngine.Dispose();
-        base.OnClosed(e);
     }
 }
