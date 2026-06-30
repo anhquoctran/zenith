@@ -116,7 +116,7 @@
         <Grid Grid.Column="1" Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0">
@@ -138,9 +138,9 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="2" Text="Recording History" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,15"/>
+                <TextBlock Grid.Row="0" Text="Recording History" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,15"/>
             
-                <ListBox x:Name="HistoryListBox" Grid.Row="3" Background="Transparent" BorderThickness="0">
+                <ListBox x:Name="HistoryListBox" Grid.Row="1" Background="Transparent" BorderThickness="0">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="data:Record">
                             <Border Background="#2D2D30" CornerRadius="8" Padding="15" Margin="0,0,0,10">
@@ -162,7 +162,7 @@
                 </ListBox>
 
                 <!-- Placeholder when history is empty -->
-                <StackPanel x:Name="EmptyHistoryPlaceholder" Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" Margin="0,40,0,0" IsVisible="False">
+                <StackPanel x:Name="EmptyHistoryPlaceholder" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" IsVisible="False">
                     <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Foreground="#555555"/>
                     <TextBlock Text="No recordings yet" FontSize="16" FontWeight="SemiBold" Foreground="#888888" HorizontalAlignment="Center"/>
                     <TextBlock Text="Your recorded screen videos will appear here." FontSize="12" Foreground="#666666" HorizontalAlignment="Center"/>

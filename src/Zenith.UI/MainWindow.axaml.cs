@@ -55,6 +55,8 @@ public partial class MainWindow : Window
 			_deviceEnumerator = new FallbackDeviceEnumerator();
 		}
 
+		_recorderEngine = new FFmpegRecorderEngine();
+
 		_waveformLine = new Polyline
         {
             Stroke = new SolidColorBrush(Color.Parse("#007ACC")),
@@ -68,7 +70,7 @@ public partial class MainWindow : Window
         _audioEngine.Start();
         
         // Initialize the native FFmpeg engine
-        _recorderEngine = new FFmpegRecorderEngine();
+        
         _recorderEngine.ErrorOccurred += (s, ev) => 
         {
             Dispatcher.UIThread.Post(() => 
@@ -104,7 +106,7 @@ public partial class MainWindow : Window
     
     private void PreviewTimer_Tick(object? sender, EventArgs e)
     {
-        if (_recorderEngine.State != RecorderState.Idle)
+        if (_recorderEngine == null || _recorderEngine.State != RecorderState.Idle)
             return; // Don't steal CPU during active recording
 
 		if (VideoSourceComboBox.SelectedItem is not VideoSource selectedVideo || selectedVideo.Id == "None" || (selectedVideo.Id != "Region" && selectedVideo.Width == 0))
@@ -178,7 +180,7 @@ public partial class MainWindow : Window
         var recordList = new List<Record>(records);
         HistoryListBox.ItemsSource = recordList;
         
-        bool hasHistory = recordList.Count > 0;
+        var hasHistory = recordList.Count > 0;
         HistoryListBox.IsVisible = hasHistory;
         EmptyHistoryPlaceholder.IsVisible = !hasHistory;
     }
@@ -388,7 +390,7 @@ public partial class MainWindow : Window
         UpdateGpuWarning();
     }
 
-    protected override void OnClosed(System.EventArgs e)
+    protected override void OnClosed(EventArgs e)
     {
         _audioEngine.Stop();
         _audioEngine.Dispose();
