@@ -50,8 +50,14 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         IntPtr CreateForMonitor([In] IntPtr monitor, [In] ref Guid iid);
     }
 
+    [DllImport("combase.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern int WindowsCreateString(string sourceString, int length, out IntPtr hstring);
+    
+    [DllImport("combase.dll", ExactSpelling = true)]
+    private static extern int WindowsDeleteString(IntPtr hstring);
+
     [DllImport("combase.dll")]
-    private static extern int RoGetActivationFactory([MarshalAs(UnmanagedType.HString)] string activatableClassId, [In] ref Guid iid, out IGraphicsCaptureItemInterop factory);
+    private static extern int RoGetActivationFactory(IntPtr activatableClassId, [In] ref Guid iid, out IGraphicsCaptureItemInterop factory);
 
     [ComImport, Guid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     private interface IDirect3DDxgiInterfaceAccess
@@ -106,7 +112,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 
             var dxgiDevice = _d3dDevice!.QueryInterface<IDXGIDevice>();
             CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.NativePointer, out var pUnknown);
-            _winrtDevice = Marshal.GetObjectForIUnknown(pUnknown) as IDirect3DDevice;
+            _winrtDevice = WinRT.MarshalInterface<IDirect3DDevice>.FromAbi(pUnknown);
         }
         catch (Exception ex)
         {
@@ -160,16 +166,20 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             ffmpeg.avformat_write_header(_fmtCtx, null);
 
             var hMonitor = MonitorFromWindow(IntPtr.Zero, 1 /* MONITOR_DEFAULTTOPRIMARY */);
-            Guid iid = new Guid("3628E81B-3CAC-4C60-B7F4-23CE0E0C3356");
-            RoGetActivationFactory("Windows.Graphics.Capture.GraphicsCaptureItem", ref iid, out var factory);
+            IntPtr hString = IntPtr.Zero;
+            WindowsCreateString("Windows.Graphics.Capture.GraphicsCaptureItem", "Windows.Graphics.Capture.GraphicsCaptureItem".Length, out hString);
             
-            Guid captureItemGuid = new Guid("79C3F95B-31F7-4EC2-A464-632EF5D30760");
-            var ptr = factory.CreateForMonitor(hMonitor, ref captureItemGuid);
-            var captureItem = Marshal.GetObjectForIUnknown(ptr) as GraphicsCaptureItem;
-
-            if (captureItem != null && _winrtDevice != null && _d3dDevice != null)
+            try
             {
-                _stagingTexture = _d3dDevice.CreateTexture2D(new Vortice.Direct3D11.Texture2DDescription
+                Guid iid = new Guid("3628E81B-3CAC-4C60-B7F4-23CE0E0C3356");
+                int hr = RoGetActivationFactory(hString, ref iid, out var factory);
+                if (hr < 0) Marshal.ThrowExceptionForHR(hr);
+                
+                Guid captureItemGuid = new Guid("79C3F95B-31F7-4EC2-A464-632EF5D30760");
+                var ptr = factory.CreateForMonitor(hMonitor, ref captureItemGuid);
+                var captureItem = WinRT.MarshalInterface<GraphicsCaptureItem>.FromAbi(ptr);
+
+                _stagingTexture = _d3dDevice!.CreateTexture2D(new Vortice.Direct3D11.Texture2DDescription
                 {
                     Width = _config.Width,
                     Height = _config.Height,
@@ -192,7 +202,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     _winrtDevice,
                     DirectXPixelFormat.B8G8R8A8UIntNormalized,
                     1,
-                    captureItem.Size);
+                    captureItem!.Size);
 
                 _session = _framePool.CreateCaptureSession(captureItem);
                 
@@ -203,6 +213,11 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 
                 _cts = new CancellationTokenSource();
                 _encodeTask = Task.Run(() => EncodeLoop(_cts.Token));
+            }
+            finally
+            {
+                if (hString != IntPtr.Zero)
+                    WindowsDeleteString(hString);
             }
             
             State = RecorderState.Recording;
