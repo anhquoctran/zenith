@@ -16,6 +16,7 @@ public class TimeSpanHandler : SqlMapper.TypeHandler<TimeSpan>
 
     public override TimeSpan Parse(object value)
     {
+        if (value is string s && TimeSpan.TryParse(s, out var ts)) return ts;
         return new TimeSpan(Convert.ToInt64(value));
     }
 }

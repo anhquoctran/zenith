@@ -8,4 +8,5 @@
   <Project Path="Zenith.UI/Zenith.UI.csproj" />
   <Project Path="TestFfmpegApp/TestFfmpegApp.csproj" />
   <Project Path="TestRunner/TestRunner.csproj" />
+  <Project Path="Zenith.Test/Zenith.Test.csproj" />
 </Solution>
