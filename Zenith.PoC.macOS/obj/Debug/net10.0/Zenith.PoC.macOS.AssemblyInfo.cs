@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Zenith.PoC.macOS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ed4a6dde4b486bbe94188828d5b2cc7840b4ed7e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2ca9496fd3f43e7978bc43f039124e80a683607c")]
 [assembly: System.Reflection.AssemblyProductAttribute("Zenith.PoC.macOS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Zenith.PoC.macOS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -23,4 +23,10 @@
     <PackageReference Include="Vortice.DXGI" Version="3.5.0" />
     <PackageReference Include="System.Management" Version="8.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\lib\ffmpeg\win-x64\*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

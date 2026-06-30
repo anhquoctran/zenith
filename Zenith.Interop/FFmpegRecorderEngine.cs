@@ -12,6 +12,7 @@ using Windows.Graphics.DirectX;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Direct3D;
+using Vortice.Mathematics;
 #endif
 
 namespace Zenith.Interop;
@@ -52,16 +53,23 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
     [DllImport("combase.dll")]
     private static extern int RoGetActivationFactory([MarshalAs(UnmanagedType.HString)] string activatableClassId, [In] ref Guid iid, out IGraphicsCaptureItemInterop factory);
 
+    [ComImport, Guid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IDirect3DDxgiInterfaceAccess
+    {
+        IntPtr GetInterface([In] ref Guid iid);
+    }
+
     private Direct3D11CaptureFramePool? _framePool;
     private GraphicsCaptureSession? _session;
     private IDirect3DDevice? _winrtDevice;
     private Vortice.Direct3D11.ID3D11Device? _d3dDevice;
-    private AVBufferRef* _hwDeviceCtx = null;
+    private Vortice.Direct3D11.ID3D11Texture2D? _stagingTexture;
+    private SwsContext* _swsCtx = null;
     
     // We keep a task to handle the actual FFmpeg encoding loop so it doesn't block UI
     private CancellationTokenSource _cts = new CancellationTokenSource();
     private Task? _encodeTask;
-    private System.Collections.Concurrent.BlockingCollection<IntPtr>? _frameQueue;
+    private System.Collections.Concurrent.BlockingCollection<IDirect3DSurface>? _frameQueue;
 #endif
 
     public FFmpegRecorderEngine()
@@ -75,6 +83,15 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 #if WINDOWS
         try
         {
+            // Override FFmpeg.AutoGen expected versions with the actual latest Master versions we downloaded
+            ffmpeg.LibraryVersionMap["avcodec"] = 63;
+            ffmpeg.LibraryVersionMap["avdevice"] = 63;
+            ffmpeg.LibraryVersionMap["avfilter"] = 12;
+            ffmpeg.LibraryVersionMap["avformat"] = 63;
+            ffmpeg.LibraryVersionMap["avutil"] = 61;
+            ffmpeg.LibraryVersionMap["swresample"] = 7;
+            ffmpeg.LibraryVersionMap["swscale"] = 10;
+
             ffmpeg.RootPath = AppContext.BaseDirectory;
             ffmpeg.avdevice_register_all();
 
@@ -90,10 +107,6 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             var dxgiDevice = _d3dDevice!.QueryInterface<IDXGIDevice>();
             CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.NativePointer, out var pUnknown);
             _winrtDevice = Marshal.GetObjectForIUnknown(pUnknown) as IDirect3DDevice;
-
-            AVBufferRef* hwDeviceCtx = null;
-            ffmpeg.av_hwdevice_ctx_create(&hwDeviceCtx, AVHWDeviceType.AV_HWDEVICE_TYPE_D3D11VA, null, null, 0);
-            _hwDeviceCtx = hwDeviceCtx;
         }
         catch (Exception ex)
         {
@@ -136,8 +149,9 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             _codecCtx->width = _config.Width;
             _codecCtx->height = _config.Height;
             _codecCtx->time_base = new AVRational { num = 1, den = _config.Framerate };
-            _codecCtx->framerate = new AVRational { num = _config.Framerate, den = 1 };
-            _codecCtx->pix_fmt = AVPixelFormat.AV_PIX_FMT_D3D11;
+            _codecCtx->pix_fmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
+            
+            ffmpeg.av_opt_set(_codecCtx->priv_data, "preset", "ultrafast", 0);
             
             ffmpeg.avcodec_open2(_codecCtx, codec, null);
             ffmpeg.avcodec_parameters_from_context(_videoStream->codecpar, _codecCtx);
@@ -153,8 +167,27 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             var ptr = factory.CreateForMonitor(hMonitor, ref captureItemGuid);
             var captureItem = Marshal.GetObjectForIUnknown(ptr) as GraphicsCaptureItem;
 
-            if (captureItem != null && _winrtDevice != null)
+            if (captureItem != null && _winrtDevice != null && _d3dDevice != null)
             {
+                _stagingTexture = _d3dDevice.CreateTexture2D(new Vortice.Direct3D11.Texture2DDescription
+                {
+                    Width = _config.Width,
+                    Height = _config.Height,
+                    MipLevels = 1,
+                    ArraySize = 1,
+                    Format = Vortice.DXGI.Format.B8G8R8A8_UNorm,
+                    SampleDescription = new Vortice.DXGI.SampleDescription(1, 0),
+                    Usage = Vortice.Direct3D11.ResourceUsage.Staging,
+                    BindFlags = Vortice.Direct3D11.BindFlags.None,
+                    CPUAccessFlags = Vortice.Direct3D11.CpuAccessFlags.Read,
+                    MiscFlags = Vortice.Direct3D11.ResourceOptionFlags.None
+                });
+
+                _swsCtx = ffmpeg.sws_getContext(
+                    _config.Width, _config.Height, AVPixelFormat.AV_PIX_FMT_BGRA,
+                    _config.Width, _config.Height, AVPixelFormat.AV_PIX_FMT_YUV420P,
+                    2, null, null, null);
+
                 _framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
                     _winrtDevice,
                     DirectXPixelFormat.B8G8R8A8UIntNormalized,
@@ -163,7 +196,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 
                 _session = _framePool.CreateCaptureSession(captureItem);
                 
-                _frameQueue = new System.Collections.Concurrent.BlockingCollection<IntPtr>();
+                _frameQueue = new System.Collections.Concurrent.BlockingCollection<IDirect3DSurface>();
                 
                 _framePool.FrameArrived += OnFrameArrived;
                 _session.StartCapture();
@@ -189,30 +222,50 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         using var frame = sender.TryGetNextFrame();
         if (frame != null && _frameQueue != null && !_frameQueue.IsAddingCompleted)
         {
-            // Real implementation would extract the surface, wrap in AVFrame, and push.
-            // For now, we simulate receiving it into the queue.
-            _frameQueue.Add(IntPtr.Zero);
+            _frameQueue.Add(frame.Surface);
         }
     }
 
     private void EncodeLoop(CancellationToken token)
     {
-        if (_frameQueue == null) return;
+        if (_frameQueue == null || _stagingTexture == null || _d3dDevice == null || _swsCtx == null) return;
         long pts = 0;
+        var d3dContext = _d3dDevice.ImmediateContext;
+        
         try
         {
-            foreach (var framePtr in _frameQueue.GetConsumingEnumerable())
+            foreach (var surface in _frameQueue.GetConsumingEnumerable())
             {
                 if (token.IsCancellationRequested) break;
                 
-                // Wrap in AVFrame
+                var dxgiInterfaceAccess = surface as IDirect3DDxgiInterfaceAccess;
+                if (dxgiInterfaceAccess == null) continue;
+
+                Guid iid = new Guid("6f15aaf2-d208-4e89-9ab4-489535d34f9c"); // ID3D11Texture2D
+                IntPtr texturePtr = dxgiInterfaceAccess.GetInterface(ref iid);
+                using var texture = new Vortice.Direct3D11.ID3D11Texture2D(texturePtr);
+                
+                int cropX = _config.CaptureRegion?.X ?? 0;
+                int cropY = _config.CaptureRegion?.Y ?? 0;
+                d3dContext.CopySubresourceRegion(_stagingTexture, 0, 0, 0, 0, texture, 0, new Box(cropX, cropY, 0, cropX + _config.Width, cropY + _config.Height, 1));
+                
+                var mapped = d3dContext.Map(_stagingTexture, 0, Vortice.Direct3D11.MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+                
                 AVFrame* avFrame = ffmpeg.av_frame_alloc();
-                avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_D3D11;
+                avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_YUV420P;
                 avFrame->width = _config.Width;
                 avFrame->height = _config.Height;
-                avFrame->pts = pts++;
+                ffmpeg.av_frame_get_buffer(avFrame, 32);
 
-                // Send to encoder
+                byte*[] srcData = new byte*[4] { (byte*)mapped.DataPointer, null, null, null };
+                int[] srcLinesize = new int[4] { mapped.RowPitch, 0, 0, 0 };
+
+                ffmpeg.sws_scale(_swsCtx, srcData, srcLinesize, 0, _config.Height, avFrame->data, avFrame->linesize);
+
+                d3dContext.Unmap(_stagingTexture, 0);
+
+                avFrame->pts = pts++;
+                
                 ffmpeg.avcodec_send_frame(_codecCtx, avFrame);
                 ffmpeg.av_frame_free(&avFrame);
 
@@ -317,13 +370,13 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         _session?.Dispose();
         _framePool?.Dispose();
         
-        if (_hwDeviceCtx != null)
-        {
-            fixed (AVBufferRef** p = &_hwDeviceCtx)
-                ffmpeg.av_buffer_unref(p);
-        }
-        
         _d3dDevice?.Dispose();
+        _stagingTexture?.Dispose();
+        if (_swsCtx != null)
+        {
+            ffmpeg.sws_freeContext(_swsCtx);
+            _swsCtx = null;
+        }
 #endif
 
         if (_filterGraph != null)

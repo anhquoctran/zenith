@@ -16,3 +16,10 @@ D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0\refint\Zenith.Interop.dll
 D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0\Zenith.Interop.pdb
 D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0\ref\Zenith.Interop.dll
 D:\DemoProject\Zenith\Zenith.Interop\obj\Debug\net10.0\Zenith.Interop.sourcelink.json
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0\avcodec-63.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0\avdevice-63.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0\avfilter-12.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0\avformat-63.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0\avutil-61.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0\swresample-7.dll
+D:\DemoProject\Zenith\Zenith.Interop\bin\Debug\net10.0\swscale-10.dll

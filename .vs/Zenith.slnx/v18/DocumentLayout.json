@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "D:\\DemoProject\\Zenith\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{292B8A3B-69B9-E5DE-636B-2280B616EB9A}|Zenith.UI\\Zenith.UI.csproj|d:\\demoproject\\zenith\\zenith.ui\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{292B8A3B-69B9-E5DE-636B-2280B616EB9A}|Zenith.UI\\Zenith.UI.csproj|solutionrelative:zenith.ui\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{13E17698-086E-3D00-D516-735CF4566883}|Zenith.Interop\\Zenith.Interop.csproj|d:\\demoproject\\zenith\\zenith.interop\\ffmpegrecorderengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{13E17698-086E-3D00-D516-735CF4566883}|Zenith.Interop\\Zenith.Interop.csproj|solutionrelative:zenith.interop\\ffmpegrecorderengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{292B8A3B-69B9-E5DE-636B-2280B616EB9A}|Zenith.UI\\Zenith.UI.csproj|d:\\demoproject\\zenith\\zenith.ui\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{292B8A3B-69B9-E5DE-636B-2280B616EB9A}|Zenith.UI\\Zenith.UI.csproj|solutionrelative:zenith.ui\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -18,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
@@ -34,20 +42,46 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "FFmpegRecorderEngine.cs",
+              "DocumentMoniker": "D:\\DemoProject\\Zenith\\Zenith.Interop\\FFmpegRecorderEngine.cs",
+              "RelativeDocumentMoniker": "Zenith.Interop\\FFmpegRecorderEngine.cs",
+              "ToolTip": "D:\\DemoProject\\Zenith\\Zenith.Interop\\FFmpegRecorderEngine.cs",
+              "RelativeToolTip": "Zenith.Interop\\FFmpegRecorderEngine.cs",
+              "ViewState": "AgIAADUAAAAAAAAAAAAkwEkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-30T04:45:56.175Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "MainWindow.axaml.cs",
+              "DocumentMoniker": "D:\\DemoProject\\Zenith\\Zenith.UI\\MainWindow.axaml.cs",
+              "RelativeDocumentMoniker": "Zenith.UI\\MainWindow.axaml.cs",
+              "ToolTip": "D:\\DemoProject\\Zenith\\Zenith.UI\\MainWindow.axaml.cs",
+              "RelativeToolTip": "Zenith.UI\\MainWindow.axaml.cs",
+              "ViewState": "AgIAAO8AAAAAAAAAAADwvwIBAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-30T04:42:43.359Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "Program.cs",
               "DocumentMoniker": "D:\\DemoProject\\Zenith\\Zenith.UI\\Program.cs",
               "RelativeDocumentMoniker": "Zenith.UI\\Program.cs",
               "ToolTip": "D:\\DemoProject\\Zenith\\Zenith.UI\\Program.cs",
               "RelativeToolTip": "Zenith.UI\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-30T03:06:24.225Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "Zenith.UI.csproj",
               "DocumentMoniker": "D:\\DemoProject\\Zenith\\Zenith.UI\\Zenith.UI.csproj",
               "RelativeDocumentMoniker": "Zenith.UI\\Zenith.UI.csproj",
@@ -55,7 +89,8 @@
               "RelativeToolTip": "Zenith.UI\\Zenith.UI.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-30T03:02:07.827Z"
+              "WhenOpened": "2026-06-30T03:02:07.827Z",
+              "EditorCaption": ""
             }
           ]
         }

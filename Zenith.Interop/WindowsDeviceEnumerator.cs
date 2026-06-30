@@ -59,7 +59,6 @@ public class WindowsDeviceEnumerator : IDeviceEnumerator
         if (sources.Count == 0)
             sources.Add(new VideoSource { Name = "No Devices Found", Id = "None", Width = 0, Height = 0 });
 #endif
-        sources.Add(new VideoSource { Name = "Region Select", Id = "Region", Width = 0, Height = 0 });
         return sources;
     }
 
