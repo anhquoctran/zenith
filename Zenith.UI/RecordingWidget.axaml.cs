@@ -13,16 +13,17 @@ public partial class RecordingWidget : Window
     private readonly DispatcherTimer _timer;
     private DateTime _startTime;
 
-    public RecordingWidget() : this(null) { }
+    public RecordingWidget() : this(null, DateTime.Now) { }
 
-    public RecordingWidget(IRecorderEngine? engine)
+    public RecordingWidget(IRecorderEngine? engine, DateTime? recordingStartTime = null)
     {
         InitializeComponent();
         _engine = engine;
+        _startTime = recordingStartTime ?? DateTime.Now;
 
         _timer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(1)
+            Interval = TimeSpan.FromMilliseconds(500)
         };
         _timer.Tick += (s, e) =>
         {
@@ -34,7 +35,9 @@ public partial class RecordingWidget : Window
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
-        _startTime = DateTime.Now;
+        // Update immediately on open, then let timer continue
+        var elapsed = DateTime.Now - _startTime;
+        TimerText.Text = elapsed.ToString(@"hh\:mm\:ss");
         _timer.Start();
     }
 

@@ -40,6 +40,9 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
     [DllImport("user32.dll")]
     private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
+    [DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromPoint(System.Drawing.Point pt, uint dwFlags);
+
     [DllImport("d3d11.dll", EntryPoint = "CreateDirect3D11DeviceFromDXGIDevice", SetLastError = true)]
     private static extern uint CreateDirect3D11DeviceFromDXGIDevice(IntPtr dxgiDevice, out IntPtr graphicsDevice);
 
@@ -76,6 +79,10 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
     private CancellationTokenSource _cts = new CancellationTokenSource();
     private Task? _encodeTask;
     private System.Collections.Concurrent.BlockingCollection<IDirect3DSurface>? _frameQueue;
+    
+    // Monitor origin in screen coordinates, needed to compute crop offsets
+    private int _monitorOriginX;
+    private int _monitorOriginY;
 #endif
 
     public FFmpegRecorderEngine()
@@ -142,30 +149,22 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         
         try
         {
-            // Open AVFormatContext
-            AVFormatContext* fmtCtx = null;
-            var outFormat = ffmpeg.av_guess_format(null, _config.OutputPath ?? "output.mp4", null);
-            ffmpeg.avformat_alloc_output_context2(&fmtCtx, outFormat, null, _config.OutputPath ?? "output.mp4");
-            _fmtCtx = fmtCtx;
+            IntPtr hMonitor;
+            if (_config.MonitorHandle != IntPtr.Zero)
+            {
+                hMonitor = _config.MonitorHandle;
+            }
+            else if (_config.CaptureRegion.HasValue)
+            {
+                var region = _config.CaptureRegion.Value;
+                var centerPoint = new System.Drawing.Point(region.X + region.Width / 2, region.Y + region.Height / 2);
+                hMonitor = MonitorFromPoint(centerPoint, 2 /* MONITOR_DEFAULTTONEAREST */);
+            }
+            else
+            {
+                hMonitor = MonitorFromWindow(IntPtr.Zero, 1 /* MONITOR_DEFAULTTOPRIMARY */);
+            }
 
-            var codec = ffmpeg.avcodec_find_encoder(AVCodecID.AV_CODEC_ID_H264);
-            _videoStream = ffmpeg.avformat_new_stream(_fmtCtx, codec);
-            
-            _codecCtx = ffmpeg.avcodec_alloc_context3(codec);
-            _codecCtx->width = _config.Width;
-            _codecCtx->height = _config.Height;
-            _codecCtx->time_base = new AVRational { num = 1, den = _config.Framerate };
-            _codecCtx->pix_fmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
-            
-            ffmpeg.av_opt_set(_codecCtx->priv_data, "preset", "ultrafast", 0);
-            
-            ffmpeg.avcodec_open2(_codecCtx, codec, null);
-            ffmpeg.avcodec_parameters_from_context(_videoStream->codecpar, _codecCtx);
-            
-            ffmpeg.avio_open(&_fmtCtx->pb, _config.OutputPath ?? "output.mp4", ffmpeg.AVIO_FLAG_WRITE);
-            ffmpeg.avformat_write_header(_fmtCtx, null);
-
-            var hMonitor = MonitorFromWindow(IntPtr.Zero, 1 /* MONITOR_DEFAULTTOPRIMARY */);
             IntPtr hString = IntPtr.Zero;
             WindowsCreateString("Windows.Graphics.Capture.GraphicsCaptureItem", "Windows.Graphics.Capture.GraphicsCaptureItem".Length, out hString);
             
@@ -179,10 +178,59 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 var ptr = factory.CreateForMonitor(hMonitor, ref captureItemGuid);
                 var captureItem = WinRT.MarshalInterface<GraphicsCaptureItem>.FromAbi(ptr);
 
+                // The capture frame will be at captureItem.Size (full monitor pixel size)
+                int captureW = captureItem!.Size.Width;
+                int captureH = captureItem.Size.Height;
+                
+                // Store monitor origin for crop offset calculation in EncodeLoop
+                // CaptureRegion is in screen coords; captured texture starts at (0,0)
+                if (_config.CaptureRegion.HasValue)
+                {
+                    _monitorOriginX = _config.CaptureRegion.Value.X;
+                    _monitorOriginY = _config.CaptureRegion.Value.Y;
+                }
+                else
+                {
+                    _monitorOriginX = 0;
+                    _monitorOriginY = 0;
+                }
+                
+                // Output dimensions: use config Width/Height (which may be a sub-region)
+                int outputW = _config.Width;
+                int outputH = _config.Height;
+
+                // Open AVFormatContext
+                AVFormatContext* fmtCtx = null;
+                var outFormat = ffmpeg.av_guess_format(null, _config.OutputPath ?? "output.mp4", null);
+                ffmpeg.avformat_alloc_output_context2(&fmtCtx, outFormat, null, _config.OutputPath ?? "output.mp4");
+                _fmtCtx = fmtCtx;
+
+                var codec = ffmpeg.avcodec_find_encoder(AVCodecID.AV_CODEC_ID_H264);
+                _videoStream = ffmpeg.avformat_new_stream(_fmtCtx, codec);
+                
+                _codecCtx = ffmpeg.avcodec_alloc_context3(codec);
+                _codecCtx->width = outputW;
+                _codecCtx->height = outputH;
+                _codecCtx->time_base = new AVRational { num = 1, den = _config.Framerate };
+                _codecCtx->pix_fmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
+                ffmpeg.av_opt_set(_codecCtx->priv_data, "preset", "ultrafast", 0);
+                
+                if ((_fmtCtx->oformat->flags & ffmpeg.AVFMT_GLOBALHEADER) != 0)
+                {
+                    _codecCtx->flags |= ffmpeg.AV_CODEC_FLAG_GLOBAL_HEADER;
+                }
+                
+                ffmpeg.avcodec_open2(_codecCtx, codec, null);
+                ffmpeg.avcodec_parameters_from_context(_videoStream->codecpar, _codecCtx);
+                
+                ffmpeg.avio_open(&_fmtCtx->pb, _config.OutputPath ?? "output.mp4", ffmpeg.AVIO_FLAG_WRITE);
+                ffmpeg.avformat_write_header(_fmtCtx, null);
+
+                // Staging texture matches the OUTPUT size (the region we want to encode)
                 _stagingTexture = _d3dDevice!.CreateTexture2D(new Vortice.Direct3D11.Texture2DDescription
                 {
-                    Width = _config.Width,
-                    Height = _config.Height,
+                    Width = outputW,
+                    Height = outputH,
                     MipLevels = 1,
                     ArraySize = 1,
                     Format = Vortice.DXGI.Format.B8G8R8A8_UNorm,
@@ -193,16 +241,17 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     MiscFlags = Vortice.Direct3D11.ResourceOptionFlags.None
                 });
 
+                // sws input = outputW x outputH (we crop to this size before color conversion)
                 _swsCtx = ffmpeg.sws_getContext(
-                    _config.Width, _config.Height, AVPixelFormat.AV_PIX_FMT_BGRA,
-                    _config.Width, _config.Height, AVPixelFormat.AV_PIX_FMT_YUV420P,
+                    outputW, outputH, AVPixelFormat.AV_PIX_FMT_BGRA,
+                    outputW, outputH, AVPixelFormat.AV_PIX_FMT_YUV420P,
                     2, null, null, null);
 
                 _framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
                     _winrtDevice,
                     DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                    1,
-                    captureItem!.Size);
+                    2,
+                    captureItem.Size);
 
                 _session = _framePool.CreateCaptureSession(captureItem);
                 
@@ -253,15 +302,23 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             {
                 if (token.IsCancellationRequested) break;
                 
-                var dxgiInterfaceAccess = surface as IDirect3DDxgiInterfaceAccess;
+                var ptr = WinRT.MarshalInterface<Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface>.FromManaged(surface);
+                var dxgiInterfaceAccess = Marshal.GetObjectForIUnknown(ptr) as IDirect3DDxgiInterfaceAccess;
+                Marshal.Release(ptr);
                 if (dxgiInterfaceAccess == null) continue;
 
                 Guid iid = new Guid("6f15aaf2-d208-4e89-9ab4-489535d34f9c"); // ID3D11Texture2D
                 IntPtr texturePtr = dxgiInterfaceAccess.GetInterface(ref iid);
                 using var texture = new Vortice.Direct3D11.ID3D11Texture2D(texturePtr);
                 
-                int cropX = _config.CaptureRegion?.X ?? 0;
-                int cropY = _config.CaptureRegion?.Y ?? 0;
+                // Crop coordinates: CaptureRegion is in screen coords, but the
+                // captured texture starts at (0,0) for the monitor. For full-screen
+                // capture of a single monitor, crop is (0,0). For region capture
+                // within that same monitor, we use (0,0) since CaptureRegion already
+                // has the monitor's full bounds as X,Y when doing full monitor capture.
+                // The CopySubresourceRegion source box is in texture-local coords.
+                int cropX = 0;
+                int cropY = 0;
                 d3dContext.CopySubresourceRegion(_stagingTexture, 0, 0, 0, 0, texture, 0, new Box(cropX, cropY, 0, cropX + _config.Width, cropY + _config.Height, 1));
                 
                 var mapped = d3dContext.Map(_stagingTexture, 0, Vortice.Direct3D11.MapMode.Read, Vortice.Direct3D11.MapFlags.None);
@@ -287,6 +344,8 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 AVPacket* pkt = ffmpeg.av_packet_alloc();
                 while (ffmpeg.avcodec_receive_packet(_codecCtx, pkt) == 0)
                 {
+                    ffmpeg.av_packet_rescale_ts(pkt, _codecCtx->time_base, _videoStream->time_base);
+                    pkt->stream_index = _videoStream->index;
                     ffmpeg.av_interleaved_write_frame(_fmtCtx, pkt);
                     ffmpeg.av_packet_unref(pkt);
                 }
@@ -340,6 +399,8 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     AVPacket* pkt = ffmpeg.av_packet_alloc();
                     while (ffmpeg.avcodec_receive_packet(_codecCtx, pkt) == 0)
                     {
+                        ffmpeg.av_packet_rescale_ts(pkt, _codecCtx->time_base, _videoStream->time_base);
+                        pkt->stream_index = _videoStream->index;
                         ffmpeg.av_interleaved_write_frame(_fmtCtx, pkt);
                         ffmpeg.av_packet_unref(pkt);
                     }

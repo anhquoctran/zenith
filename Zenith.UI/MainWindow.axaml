@@ -75,6 +75,8 @@
                     <Button x:Name="StopButton" Content="⏹" Click="StopButton_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" FontSize="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="Stop"/>
                     <Button Content="⧉" Click="ShowWidget_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" FontSize="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Widget"/>
                 </StackPanel>
+                
+                <TextBlock x:Name="ElapsedTimeText" Text="00:00:00" Foreground="#FF4444" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,0" IsVisible="False"/>
             </StackPanel>
         </Border>
 

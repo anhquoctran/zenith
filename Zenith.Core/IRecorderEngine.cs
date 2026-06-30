@@ -36,7 +36,11 @@ public class RecordingConfig
     public System.Drawing.Rectangle? CaptureRegion { get; set; } = null;
     public bool EnableWebcam { get; set; } = false;
     public string WebcamDeviceName { get; set; } = string.Empty;
-    // Expand later for audio/video source selection
+    
+    /// <summary>
+    /// The HMONITOR handle for the target monitor. If IntPtr.Zero, defaults to primary.
+    /// </summary>
+    public IntPtr MonitorHandle { get; set; } = IntPtr.Zero;
 }
 
 public interface IRecorderEngine : IDisposable

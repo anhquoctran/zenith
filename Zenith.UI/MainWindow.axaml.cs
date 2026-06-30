@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Zenith.Core;
 using Avalonia;
 using Avalonia.Controls;
@@ -15,6 +16,10 @@ namespace Zenith.UI;
 
 public partial class MainWindow : Window
 {
+#if WINDOWS
+    [DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromPoint(System.Drawing.Point pt, uint dwFlags);
+#endif
     private RecordingWidget? _widget;
     private AudioCaptureEngine _audioEngine;
     private IRecorderEngine _recorderEngine;
@@ -25,6 +30,8 @@ public partial class MainWindow : Window
     private IDeviceEnumerator _deviceEnumerator;
     private DispatcherTimer _previewTimer;
     private System.Drawing.Rectangle? _selectedRegion;
+    private DispatcherTimer _elapsedTimer;
+    private DateTime _recordingStartTime;
 
     public MainWindow()
     {
@@ -68,6 +75,13 @@ public partial class MainWindow : Window
         _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _previewTimer.Tick += PreviewTimer_Tick;
         _previewTimer.Start();
+        
+        _elapsedTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _elapsedTimer.Tick += (s, e) =>
+        {
+            var elapsed = DateTime.Now - _recordingStartTime;
+            ElapsedTimeText.Text = elapsed.ToString(@"hh\:mm\:ss");
+        };
     }
     
     private void PreviewTimer_Tick(object? sender, EventArgs e)
@@ -214,6 +228,14 @@ public partial class MainWindow : Window
             config.Width = selectedVideo.Width;
             config.Height = selectedVideo.Height;
             config.CaptureRegion = new System.Drawing.Rectangle(selectedVideo.X, selectedVideo.Y, selectedVideo.Width, selectedVideo.Height);
+            
+#if WINDOWS
+            // Get the correct HMONITOR for the selected screen
+            var centerPoint = new System.Drawing.Point(
+                selectedVideo.X + selectedVideo.Width / 2,
+                selectedVideo.Y + selectedVideo.Height / 2);
+            config.MonitorHandle = MonitorFromPoint(centerPoint, 2 /* MONITOR_DEFAULTTONEAREST */);
+#endif
         }
         else
         {
@@ -221,9 +243,19 @@ public partial class MainWindow : Window
             config.Height = 1080;
         }
         
+        // Show countdown overlay before recording
+        var countdownRegion = config.CaptureRegion ?? new System.Drawing.Rectangle(0, 0, config.Width, config.Height);
+        var countdown = new CountdownOverlay(countdownRegion);
+        countdown.Show();
+        await countdown.RunCountdownAsync();
+        
         await _recorderEngine.InitializeAsync(config);
         await _recorderEngine.StartAsync();
 
+        _recordingStartTime = DateTime.Now;
+        _elapsedTimer.Start();
+        ElapsedTimeText.IsVisible = true;
+        
         RecordButton.IsEnabled = false;
         StopButton.IsEnabled = true;
     }
@@ -231,6 +263,9 @@ public partial class MainWindow : Window
     private async void StopButton_Click(object? sender, RoutedEventArgs e)
     {
         StopButton.IsEnabled = false;
+        _elapsedTimer.Stop();
+        ElapsedTimeText.IsVisible = false;
+        ElapsedTimeText.Text = "00:00:00";
         await _recorderEngine.StopAsync();
         RecordButton.IsEnabled = true;
         
@@ -241,7 +276,7 @@ public partial class MainWindow : Window
     {
         if (_widget == null)
         {
-            _widget = new RecordingWidget(_recorderEngine);
+            _widget = new RecordingWidget(_recorderEngine, _recordingStartTime);
             _widget.Closed += (s, ev) =>
             {
                 _widget = null;

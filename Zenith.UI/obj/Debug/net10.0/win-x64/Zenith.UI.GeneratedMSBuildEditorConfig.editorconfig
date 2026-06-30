@@ -36,6 +36,9 @@ build_property.EnableCodeStyleSeverity =
 [D:/DemoProject/Zenith/Zenith.UI/App.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
+[D:/DemoProject/Zenith/Zenith.UI/CountdownOverlay.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
 [D:/DemoProject/Zenith/Zenith.UI/MainWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 

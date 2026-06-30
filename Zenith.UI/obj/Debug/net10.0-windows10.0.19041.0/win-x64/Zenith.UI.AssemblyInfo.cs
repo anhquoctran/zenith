@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Zenith")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8f8bec32727e70b627ad9cf43fb085ff79154fff")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f5e02906930ee1042f5a902040aac153d3eac86b")]
 [assembly: System.Reflection.AssemblyProductAttribute("Zenith.UI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Zenith.UI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
