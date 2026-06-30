@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Zenith.Interop")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2ca9496fd3f43e7978bc43f039124e80a683607c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8f8bec32727e70b627ad9cf43fb085ff79154fff")]
 [assembly: System.Reflection.AssemblyProductAttribute("Zenith.Interop")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Zenith.Interop")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
