@@ -150,6 +150,13 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+
+                <!-- Placeholder when history is empty -->
+                <StackPanel x:Name="EmptyHistoryPlaceholder" Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" Margin="0,40,0,0" IsVisible="False">
+                    <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Foreground="#555555"/>
+                    <TextBlock Text="No recordings yet" FontSize="16" FontWeight="SemiBold" Foreground="#888888" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Your recorded screen videos will appear here." FontSize="12" Foreground="#666666" HorizontalAlignment="Center"/>
+                </StackPanel>
             </Grid>
         </Grid>
     </Grid>

@@ -174,7 +174,12 @@ public partial class MainWindow : Window
     private async System.Threading.Tasks.Task LoadHistoryAsync()
     {
         var records = await _recordRepository.GetAllAsync();
-        HistoryListBox.ItemsSource = records;
+        var recordList = new List<Record>(records);
+        HistoryListBox.ItemsSource = recordList;
+        
+        bool hasHistory = recordList.Count > 0;
+        HistoryListBox.IsVisible = hasHistory;
+        EmptyHistoryPlaceholder.IsVisible = !hasHistory;
     }
 
     private void OnWaveformDataAvailable(object? sender, float maxAmplitude)
