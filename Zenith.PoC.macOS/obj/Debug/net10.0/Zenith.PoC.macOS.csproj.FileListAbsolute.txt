@@ -15,3 +15,4 @@ D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\refint\Zenith.PoC.macOS
 D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.pdb
 D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.genruntimeconfig.cache
 D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\ref\Zenith.PoC.macOS.dll
+D:\DemoProject\Zenith\Zenith.PoC.macOS\obj\Debug\net10.0\Zenith.PoC.macOS.sourcelink.json

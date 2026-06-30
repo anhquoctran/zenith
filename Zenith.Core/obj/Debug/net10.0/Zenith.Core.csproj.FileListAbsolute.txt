@@ -13,3 +13,4 @@ D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.dll
 D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\refint\Zenith.Core.dll
 D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.pdb
 D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\ref\Zenith.Core.dll
+D:\DemoProject\Zenith\Zenith.Core\obj\Debug\net10.0\Zenith.Core.sourcelink.json

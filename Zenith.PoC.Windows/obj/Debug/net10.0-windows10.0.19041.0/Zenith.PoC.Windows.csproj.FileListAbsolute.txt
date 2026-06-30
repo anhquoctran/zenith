@@ -23,3 +23,4 @@ D:\DemoProject\Zenith\Zenith.PoC.Windows\obj\Debug\net10.0-windows10.0.19041.0\r
 D:\DemoProject\Zenith\Zenith.PoC.Windows\obj\Debug\net10.0-windows10.0.19041.0\Zenith.PoC.Windows.pdb
 D:\DemoProject\Zenith\Zenith.PoC.Windows\obj\Debug\net10.0-windows10.0.19041.0\Zenith.PoC.Windows.genruntimeconfig.cache
 D:\DemoProject\Zenith\Zenith.PoC.Windows\obj\Debug\net10.0-windows10.0.19041.0\ref\Zenith.PoC.Windows.dll
+D:\DemoProject\Zenith\Zenith.PoC.Windows\obj\Debug\net10.0-windows10.0.19041.0\Zenith.PoC.Windows.sourcelink.json

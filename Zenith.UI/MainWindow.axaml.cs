@@ -59,6 +59,7 @@ public partial class MainWindow : Window
         
         Loaded += async (s, e) => 
         {
+            SaveLocationTextBox.Text = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
             await _recordRepository.InitializeAsync();
             await LoadHistoryAsync();
             LoadDevices();
@@ -191,9 +192,9 @@ public partial class MainWindow : Window
 
     private async void RecordButton_Click(object? sender, RoutedEventArgs e)
     {
-        var dbPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zenith", "records.db");
-        var dir = System.IO.Path.GetDirectoryName(dbPath);
-        var filename = System.IO.Path.Combine(dir!, $"Recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
+        var dir = SaveLocationTextBox.Text;
+        if (string.IsNullOrEmpty(dir)) dir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+        var filename = System.IO.Path.Combine(dir, $"Recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
         
         var selectedVideo = VideoSourceComboBox.SelectedItem as VideoSource;
         var config = new RecordingConfig
@@ -250,6 +251,20 @@ public partial class MainWindow : Window
 
         _widget.Show();
         this.Hide();
+    }
+
+    private async void SelectFolder_Click(object? sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions
+        {
+            Title = "Select Save Location",
+            AllowMultiple = false
+        });
+        
+        if (folders != null && folders.Count > 0)
+        {
+            SaveLocationTextBox.Text = folders[0].Path.LocalPath;
+        }
     }
 
     private async void VideoSourceComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
