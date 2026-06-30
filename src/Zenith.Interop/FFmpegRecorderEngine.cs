@@ -414,7 +414,10 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
     private void EncodeLoop(CancellationToken token)
     {
         if (_frameQueue == null || _stagingTexture == null || _d3dDevice == null || _swsCtx == null) return;
-        long pts = 0;
+        long lastPts = -1;
+        TimeSpan? firstFrameTime = null;
+        TimeSpan totalPausedTime = TimeSpan.Zero;
+        TimeSpan? pauseStartTime = null;
         var d3dContext = _d3dDevice.ImmediateContext;
         
         try
@@ -427,6 +430,18 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     break;
                 }
                 
+                if (State == RecorderState.Paused)
+                {
+                    if (pauseStartTime == null) pauseStartTime = capturedFrame.SystemRelativeTime;
+                    capturedFrame.Dispose();
+                    continue;
+                }
+                else if (pauseStartTime != null)
+                {
+                    totalPausedTime += (capturedFrame.SystemRelativeTime - pauseStartTime.Value);
+                    pauseStartTime = null;
+                }
+
                 try
                 {
                     var surface = capturedFrame.Surface;
@@ -458,7 +473,18 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 
                     d3dContext.Unmap(_stagingTexture, 0);
 
-                    avFrame->pts = pts++;
+                    if (firstFrameTime == null) {
+                        firstFrameTime = capturedFrame.SystemRelativeTime;
+                    }
+                    
+                    TimeSpan effectiveTime = capturedFrame.SystemRelativeTime - firstFrameTime.Value - totalPausedTime;
+                    long currentPts = (long)(effectiveTime.TotalSeconds * _config.Framerate);
+                    if (currentPts <= lastPts) {
+                        currentPts = lastPts + 1;
+                    }
+                    lastPts = currentPts;
+                    
+                    avFrame->pts = currentPts;
                     
                     ffmpeg.avcodec_send_frame(_codecCtx, avFrame);
                     ffmpeg.av_frame_free(&avFrame);

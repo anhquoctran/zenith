@@ -605,7 +605,13 @@ public partial class MainWindow : Window
         UpdateGpuWarning();
     }
 
-    protected override void OnClosed(EventArgs e)
+    private async void BtnRefreshHistory_Click(object? sender, RoutedEventArgs e)
+    {
+        await LoadHistoryAsync();
+    }
+
+
+	protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
         _previewTimer?.Stop();
