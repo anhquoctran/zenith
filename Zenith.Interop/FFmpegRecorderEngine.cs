@@ -78,7 +78,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
     // We keep a task to handle the actual FFmpeg encoding loop so it doesn't block UI
     private CancellationTokenSource _cts = new CancellationTokenSource();
     private Task? _encodeTask;
-    private System.Collections.Concurrent.BlockingCollection<IDirect3DSurface>? _frameQueue;
+    private System.Collections.Concurrent.BlockingCollection<Direct3D11CaptureFrame>? _frameQueue;
     
     // Monitor origin in screen coordinates, needed to compute crop offsets
     private int _monitorOriginX;
@@ -255,7 +255,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 
                 _session = _framePool.CreateCaptureSession(captureItem);
                 
-                _frameQueue = new System.Collections.Concurrent.BlockingCollection<IDirect3DSurface>();
+                _frameQueue = new System.Collections.Concurrent.BlockingCollection<Direct3D11CaptureFrame>();
                 
                 _framePool.FrameArrived += OnFrameArrived;
                 _session.StartCapture();
@@ -283,10 +283,14 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 #if WINDOWS
     private void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
     {
-        using var frame = sender.TryGetNextFrame();
+        var frame = sender.TryGetNextFrame();
         if (frame != null && _frameQueue != null && !_frameQueue.IsAddingCompleted)
         {
-            _frameQueue.Add(frame.Surface);
+            _frameQueue.Add(frame);
+        }
+        else
+        {
+            frame?.Dispose();
         }
     }
 
@@ -298,58 +302,64 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         
         try
         {
-            foreach (var surface in _frameQueue.GetConsumingEnumerable())
+            foreach (var capturedFrame in _frameQueue.GetConsumingEnumerable())
             {
-                if (token.IsCancellationRequested) break;
-                
-                var ptr = WinRT.MarshalInterface<Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface>.FromManaged(surface);
-                var dxgiInterfaceAccess = Marshal.GetObjectForIUnknown(ptr) as IDirect3DDxgiInterfaceAccess;
-                Marshal.Release(ptr);
-                if (dxgiInterfaceAccess == null) continue;
-
-                Guid iid = new Guid("6f15aaf2-d208-4e89-9ab4-489535d34f9c"); // ID3D11Texture2D
-                IntPtr texturePtr = dxgiInterfaceAccess.GetInterface(ref iid);
-                using var texture = new Vortice.Direct3D11.ID3D11Texture2D(texturePtr);
-                
-                // Crop coordinates: CaptureRegion is in screen coords, but the
-                // captured texture starts at (0,0) for the monitor. For full-screen
-                // capture of a single monitor, crop is (0,0). For region capture
-                // within that same monitor, we use (0,0) since CaptureRegion already
-                // has the monitor's full bounds as X,Y when doing full monitor capture.
-                // The CopySubresourceRegion source box is in texture-local coords.
-                int cropX = 0;
-                int cropY = 0;
-                d3dContext.CopySubresourceRegion(_stagingTexture, 0, 0, 0, 0, texture, 0, new Box(cropX, cropY, 0, cropX + _config.Width, cropY + _config.Height, 1));
-                
-                var mapped = d3dContext.Map(_stagingTexture, 0, Vortice.Direct3D11.MapMode.Read, Vortice.Direct3D11.MapFlags.None);
-                
-                AVFrame* avFrame = ffmpeg.av_frame_alloc();
-                avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_YUV420P;
-                avFrame->width = _config.Width;
-                avFrame->height = _config.Height;
-                ffmpeg.av_frame_get_buffer(avFrame, 32);
-
-                byte*[] srcData = new byte*[4] { (byte*)mapped.DataPointer, null, null, null };
-                int[] srcLinesize = new int[4] { mapped.RowPitch, 0, 0, 0 };
-
-                ffmpeg.sws_scale(_swsCtx, srcData, srcLinesize, 0, _config.Height, avFrame->data, avFrame->linesize);
-
-                d3dContext.Unmap(_stagingTexture, 0);
-
-                avFrame->pts = pts++;
-                
-                ffmpeg.avcodec_send_frame(_codecCtx, avFrame);
-                ffmpeg.av_frame_free(&avFrame);
-
-                AVPacket* pkt = ffmpeg.av_packet_alloc();
-                while (ffmpeg.avcodec_receive_packet(_codecCtx, pkt) == 0)
+                if (token.IsCancellationRequested)
                 {
-                    ffmpeg.av_packet_rescale_ts(pkt, _codecCtx->time_base, _videoStream->time_base);
-                    pkt->stream_index = _videoStream->index;
-                    ffmpeg.av_interleaved_write_frame(_fmtCtx, pkt);
-                    ffmpeg.av_packet_unref(pkt);
+                    capturedFrame.Dispose();
+                    break;
                 }
-                ffmpeg.av_packet_free(&pkt);
+                
+                try
+                {
+                    var surface = capturedFrame.Surface;
+                    var marshaledPtr = WinRT.MarshalInterface<Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface>.FromManaged(surface);
+                    var dxgiInterfaceAccess = Marshal.GetObjectForIUnknown(marshaledPtr) as IDirect3DDxgiInterfaceAccess;
+                    Marshal.Release(marshaledPtr);
+                    if (dxgiInterfaceAccess == null) continue;
+
+                    Guid iid = new Guid("6f15aaf2-d208-4e89-9ab4-489535d34f9c"); // ID3D11Texture2D
+                    IntPtr texturePtr = dxgiInterfaceAccess.GetInterface(ref iid);
+                    using var texture = new Vortice.Direct3D11.ID3D11Texture2D(texturePtr);
+                    
+                    int cropX = 0;
+                    int cropY = 0;
+                    d3dContext.CopySubresourceRegion(_stagingTexture, 0, 0, 0, 0, texture, 0, new Box(cropX, cropY, 0, cropX + _config.Width, cropY + _config.Height, 1));
+                    
+                    var mapped = d3dContext.Map(_stagingTexture, 0, Vortice.Direct3D11.MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+                    
+                    AVFrame* avFrame = ffmpeg.av_frame_alloc();
+                    avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_YUV420P;
+                    avFrame->width = _config.Width;
+                    avFrame->height = _config.Height;
+                    ffmpeg.av_frame_get_buffer(avFrame, 32);
+
+                    byte*[] srcData = new byte*[4] { (byte*)mapped.DataPointer, null, null, null };
+                    int[] srcLinesize = new int[4] { mapped.RowPitch, 0, 0, 0 };
+
+                    ffmpeg.sws_scale(_swsCtx, srcData, srcLinesize, 0, _config.Height, avFrame->data, avFrame->linesize);
+
+                    d3dContext.Unmap(_stagingTexture, 0);
+
+                    avFrame->pts = pts++;
+                    
+                    ffmpeg.avcodec_send_frame(_codecCtx, avFrame);
+                    ffmpeg.av_frame_free(&avFrame);
+
+                    AVPacket* pkt = ffmpeg.av_packet_alloc();
+                    while (ffmpeg.avcodec_receive_packet(_codecCtx, pkt) == 0)
+                    {
+                        ffmpeg.av_packet_rescale_ts(pkt, _codecCtx->time_base, _videoStream->time_base);
+                        pkt->stream_index = _videoStream->index;
+                        ffmpeg.av_interleaved_write_frame(_fmtCtx, pkt);
+                        ffmpeg.av_packet_unref(pkt);
+                    }
+                    ffmpeg.av_packet_free(&pkt);
+                }
+                finally
+                {
+                    capturedFrame.Dispose();
+                }
             }
         }
         catch (Exception ex)

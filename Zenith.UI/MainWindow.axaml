@@ -4,8 +4,8 @@
         xmlns:core="using:Zenith.Core"
         x:Class="Zenith.UI.MainWindow"
         Title="Zenith Screen Recorder"
-        Width="900" Height="700"
-        MinHeight="700"
+        Width="900" Height="760"
+        MinHeight="760"
         MinWidth="900"
         WindowStartupLocation="CenterScreen"
         Background="#1E1E1E"
@@ -71,8 +71,12 @@
                 </Grid>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,20,0,0">
-                    <Button x:Name="RecordButton" Content="●" Click="RecordButton_Click" Background="#FF4444" Foreground="White" Width="48" Height="48" CornerRadius="24" FontSize="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Record"/>
-                    <Button x:Name="StopButton" Content="⏹" Click="StopButton_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" FontSize="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="Stop"/>
+                    <Button x:Name="RecordButton" Click="RecordButton_Click" Background="#FF4444" Foreground="White" Width="48" Height="48" CornerRadius="24" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Record">
+                        <Image Source="avares://Zenith.UI/Assets/record.png" Width="20" Height="20"/>
+                    </Button>
+                    <Button x:Name="StopButton" Click="StopButton_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="Stop">
+                        <Image Source="avares://Zenith.UI/Assets/stop.png" Width="20" Height="20"/>
+                    </Button>
                     <Button Content="⧉" Click="ShowWidget_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" FontSize="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Widget"/>
                 </StackPanel>
                 
