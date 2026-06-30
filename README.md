@@ -1,0 +1,42 @@
+# Zenith Screen Recorder
+
+Zenith is a modern, cross-platform screen recording application built with Avalonia UI and .NET 10. It utilizes FFmpeg for high-performance video encoding.
+
+## Features
+- **Cross-Platform UI:** Sleek and modern user interface powered by Avalonia UI.
+- **Hardware Capture:** Efficient desktop coordinate mapping for precise capture.
+- **Region Select:** Click and drag to capture a custom screen region seamlessly.
+- **Floating Widget:** Convenient mini-player widget for quick controls during recording.
+- **Audio Capture:** Real-time waveform visualization.
+
+## Architecture
+- `Zenith.Core`: Core domain models and interfaces.
+- `Zenith.Data`: Local database integration (SQLite) for recording history.
+- `Zenith.Interop`: Platform-specific integrations, hardware enumerators, and FFmpeg engine wrappers.
+- `Zenith.UI`: The main Avalonia UI application.
+
+## Installation
+Currently, Zenith is in active development. Once stable releases are available, you will be able to install it by following these steps:
+
+1. Navigate to the [Releases](#) page of this repository.
+2. Download the latest `.zip` or installer file for your operating system (Windows, macOS, or Linux).
+3. Extract the downloaded file to a folder of your choice.
+4. Run the `Zenith.exe` (Windows) or the Zenith application file (macOS/Linux) to start recording!
+
+*Note: You may need to have [FFmpeg](https://ffmpeg.org/download.html) installed on your system if it is not bundled with the application.*
+
+## For Developers
+Ensure you have the .NET 10 SDK installed.
+
+1. Clone the repository.
+2. Open `Zenith.sln` in your preferred IDE (Visual Studio, Rider, VS Code).
+3. Set `Zenith.UI` as the startup project.
+4. Run the application!
+
+## Dependencies
+- Avalonia UI (v12)
+- FFmpeg (must be available in PATH or packaged with the app)
+- System.Data.SQLite
+
+## License
+MIT

@@ -427,3 +427,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# SQLite and App Data
+*.sqlite
+*.db
+*.db-journal
+records.db
