@@ -13,22 +13,7 @@
     <Version>1.0.0</Version>
     <Authors>Zenith</Authors>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Assets/pause.png" />
-    <None Remove="Assets/record.png" />
-    <None Remove="Assets/stop.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Assets/pause.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets/record.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets/stop.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.0.5" />

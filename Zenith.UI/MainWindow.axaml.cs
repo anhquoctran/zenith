@@ -144,8 +144,10 @@ public partial class MainWindow : Window
     
     private void LoadDevices()
     {
-        var gpus = new List<GPUDevice>();
-        gpus.Add(new GPUDevice { Name = "Auto (Zero-Copy)", Id = "Auto" });
+        var gpus = new List<GPUDevice>
+		{
+			new() { Name = "Auto", Id = "Auto" }
+		};
         gpus.AddRange(_deviceEnumerator.GetGPUDevices());
         GpuComboBox.ItemsSource = gpus;
         GpuComboBox.SelectedIndex = 0;

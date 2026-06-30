@@ -4,8 +4,9 @@
         xmlns:core="using:Zenith.Core"
         x:Class="Zenith.UI.MainWindow"
         Title="Zenith"
-        Width="900" Height="760"
-        MinHeight="760"
+        Width="900" 
+        Height="850"
+        MinHeight="850"
         MinWidth="900"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
@@ -89,10 +90,10 @@
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,20,0,0">
                     <Button x:Name="RecordButton" Click="RecordButton_Click" Background="#FF4444" Foreground="White" Width="48" Height="48" CornerRadius="24" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Record">
-                        <Image Source="/Assets/record.png" Width="20" Height="20"/>
+                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="Bold" Text="&#xf111;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
                     <Button x:Name="StopButton" Click="StopButton_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="Stop">
-                        <Image Source="/Assets/stop.png" Width="20" Height="20"/>
+                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="Bold" Text="&#xf04d;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
                     <Button Content="⧉" Click="ShowWidget_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" FontSize="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Widget"/>
                 </StackPanel>
@@ -106,37 +107,50 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Text="Preview" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,10"/>
-            
-            <Border Grid.Row="1" Background="#252526" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Height="250" Margin="0,0,0,20" ClipToBounds="True">
-                <Image x:Name="PreviewImage" Stretch="Uniform" />
-            </Border>
 
-            <TextBlock Grid.Row="2" Text="Recording History" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,15"/>
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="Preview" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,10"/>
             
-            <ListBox x:Name="HistoryListBox" Grid.Row="3" Background="Transparent" BorderThickness="0">
-                <ListBox.ItemTemplate>
-                    <DataTemplate x:DataType="data:Record">
-                        <Border Background="#2D2D30" CornerRadius="8" Padding="15" Margin="0,0,0,10">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Grid.Column="0" Width="100" Height="56" Background="#111111" CornerRadius="4"/>
-                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="16" Foreground="#ECECEC"/>
-                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                                        <TextBlock Text="{Binding Resolution}" Foreground="#AAAAAA" FontSize="12"/>
-                                        <TextBlock Text=" • " Foreground="#AAAAAA" FontSize="12"/>
-                                        <TextBlock Text="{Binding Codec}" Foreground="#AAAAAA" FontSize="12"/>
+                <Border Grid.Row="1" Background="#252526" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" MinHeight="300" MaxHeight="500" Margin="0,0,0,20" ClipToBounds="True">
+                    <Image x:Name="PreviewImage" Stretch="Uniform" />
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="2" Text="Recording History" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,15"/>
+            
+                <ListBox x:Name="HistoryListBox" Grid.Row="3" Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="data:Record">
+                            <Border Background="#2D2D30" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="100" Height="56" Background="#111111" CornerRadius="4"/>
+                                    <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="16" Foreground="#ECECEC"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                            <TextBlock Text="{Binding Resolution}" Foreground="#AAAAAA" FontSize="12"/>
+                                            <TextBlock Text=" • " Foreground="#AAAAAA" FontSize="12"/>
+                                            <TextBlock Text="{Binding Codec}" Foreground="#AAAAAA" FontSize="12"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
-                                <TextBlock Grid.Column="2" Text="{Binding Duration, StringFormat={}{0:hh\\:mm\\:ss}}" Foreground="#ECECEC" VerticalAlignment="Center" FontSize="14" FontWeight="Medium"/>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                                    <TextBlock Grid.Column="2" Text="{Binding Duration, StringFormat={}{0:hh\\:mm\\:ss}}" Foreground="#ECECEC" VerticalAlignment="Center" FontSize="14" FontWeight="Medium"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

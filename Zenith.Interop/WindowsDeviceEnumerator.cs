@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using Zenith.Core;
-using NAudio.Wave;
-using NAudio.CoreAudioApi;
 
 #if WINDOWS
 using System.Management;
@@ -13,54 +13,76 @@ namespace Zenith.Interop;
 
 public class WindowsDeviceEnumerator : IDeviceEnumerator
 {
-    public IEnumerable<VideoSource> GetVideoSources()
+    [DllImport("zenith_native.dll", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr GetAvailableSources();
+
+    private class NativeSource
     {
-        var sources = new List<VideoSource>();
-#if WINDOWS
+        public string SourceID { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string Resolution { get; set; } = string.Empty;
+        public string SourceType { get; set; } = string.Empty;
+    }
+
+    private static List<NativeSource> LoadNativeSources()
+    {
         try
         {
-            DXGI.CreateDXGIFactory1(out IDXGIFactory1? factory).CheckError();
-            if (factory != null)
+            IntPtr ptr = GetAvailableSources();
+            if (ptr != IntPtr.Zero)
             {
-                var adapterIndex = 0;
-                while (factory.EnumAdapters1(adapterIndex, out var adapter).Success)
+                string? json = Marshal.PtrToStringUTF8(ptr);
+                if (!string.IsNullOrEmpty(json))
                 {
-                    var adapterDesc = adapter.Description1;
-                    var outputIndex = 0;
-                    while (adapter.EnumOutputs(outputIndex, out var output).Success)
-                    {
-                        var desc = output.Description;
-                        var width = desc.DesktopCoordinates.Right - desc.DesktopCoordinates.Left;
-                        var height = desc.DesktopCoordinates.Bottom - desc.DesktopCoordinates.Top;
-                        sources.Add(new VideoSource
-                        {
-                            Name = $"Screen {sources.Count + 1} ({width}x{height})",
-                            Id = desc.DeviceName,
-                            Width = width,
-                            Height = height,
-                            X = desc.DesktopCoordinates.Left,
-                            Y = desc.DesktopCoordinates.Top,
-                            OwningGpuId = adapterDesc.Luid.ToString()
-                        });
-                        output.Dispose();
-                        outputIndex++;
-                    }
-                    adapter.Dispose();
-                    adapterIndex++;
+                    return JsonSerializer.Deserialize<List<NativeSource>>(json) ?? new();
                 }
-                factory.Dispose();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error enumerating displays: {ex.Message}");
-            if (sources.Count == 0)
-                sources.Add(new VideoSource { Name = "Display 1", Id = "Display1", Width = 1920, Height = 1080 });
+            Console.WriteLine($"Error calling native GetAvailableSources: {ex.Message}");
         }
-#else
+        return new();
+    }
+
+    public IEnumerable<VideoSource> GetVideoSources()
+    {
+        var sources = new List<VideoSource>();
+        var nativeSources = LoadNativeSources();
+        
+        foreach (var ns in nativeSources)
+        {
+            if (ns.SourceType == "Screen" || ns.SourceType == "Window")
+            {
+                int width = 1920;
+                int height = 1080;
+                if (!string.IsNullOrEmpty(ns.Resolution))
+                {
+                    var parts = ns.Resolution.Split('x');
+                    if (parts.Length == 2 && int.TryParse(parts[0], out int w) && int.TryParse(parts[1], out int h))
+                    {
+                        width = w;
+                        height = h;
+                    }
+                }
+
+                sources.Add(new VideoSource
+                {
+                    Name = ns.DisplayName,
+                    Id = ns.SourceID,
+                    Width = width,
+                    Height = height,
+                    X = 0,
+                    Y = 0,
+                    OwningGpuId = "Auto"
+                });
+            }
+        }
+
         if (sources.Count == 0)
-            sources.Add(new VideoSource { Name = "No Devices Found", Id = "None", Width = 0, Height = 0 });
-#endif
+        {
+            sources.Add(new VideoSource { Name = "Display 1", Id = "Display1", Width = 1920, Height = 1080 });
+        }
         return sources;
     }
 
@@ -99,34 +121,20 @@ public class WindowsDeviceEnumerator : IDeviceEnumerator
     public IEnumerable<AudioSource> GetAudioSources()
     {
         var sources = new List<AudioSource>();
-#if WINDOWS
-        try
+        var nativeSources = LoadNativeSources();
+
+        foreach (var ns in nativeSources)
         {
-            var enumerator = new MMDeviceEnumerator();
-            foreach (var endpoint in enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
+            if (ns.SourceType == "AudioInput" || ns.SourceType == "AudioOutput")
             {
                 sources.Add(new AudioSource
                 {
-                    Name = endpoint.FriendlyName,
-                    Id = endpoint.ID
-                });
-            }
-            
-            // Add loopback devices
-            foreach (var endpoint in enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
-            {
-                sources.Add(new AudioSource
-                {
-                    Name = $"System Audio: {endpoint.FriendlyName}",
-                    Id = endpoint.ID
+                    Name = ns.DisplayName,
+                    Id = ns.SourceID
                 });
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Audio enumeration error: {ex.Message}");
-        }
-#endif
+
         return sources;
     }
 
@@ -134,23 +142,20 @@ public class WindowsDeviceEnumerator : IDeviceEnumerator
     {
         var sources = new List<WebcamSource>();
         sources.Add(new WebcamSource { Name = "None", Id = "None" });
-        
-#if WINDOWS
-        try
+
+        var nativeSources = LoadNativeSources();
+        foreach (var ns in nativeSources)
         {
-            using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE (PNPClass = 'Image' OR PNPClass = 'Camera')");
-            foreach (var device in searcher.Get())
+            if (ns.SourceType == "Webcam")
             {
-                var name = device["Caption"]?.ToString() ?? "Unknown Camera";
-                var id = device["DeviceID"]?.ToString() ?? Guid.NewGuid().ToString();
-                sources.Add(new WebcamSource { Name = name, Id = id });
+                sources.Add(new WebcamSource
+                {
+                    Name = ns.DisplayName,
+                    Id = ns.SourceID
+                });
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error enumerating webcams: {ex.Message}");
-        }
-#endif
+
         return sources;
     }
 }

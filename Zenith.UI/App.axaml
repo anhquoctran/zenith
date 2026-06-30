@@ -7,6 +7,10 @@
         <FluentTheme />
     </Application.Styles>
 
+    <Application.Resources>
+        <FontFamily x:Key="FontAwesome">avares://Zenith.UI/Assets/Fonts/fa-solid-900.ttf#Font Awesome 6 Free</FontFamily>
+    </Application.Resources>
+
     <TrayIcon.Icons>
         <TrayIcons>
             <TrayIcon ToolTipText="Zenith Screen Recorder">

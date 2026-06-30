@@ -434,3 +434,9 @@ FodyWeavers.xsd
 *.db
 *.db-journal
 records.db
+
+# Zenith native build output
+/Zenith.Interop/zenith_native.dll
+/Zenith.Interop/zenith_native.lib
+/Zenith.Interop/zenith_native.exp
+/Zenith.Interop/zenith_native.obj
