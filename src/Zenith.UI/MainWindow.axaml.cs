@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using Zenith.Core;
 using Zenith.Data;
 using Zenith.Interop;
+using Path = System.IO.Path;
 
 namespace Zenith.UI;
 
@@ -77,13 +78,13 @@ public partial class MainWindow : Window
             });
         };
         
-        var dbPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zenith", "records.db");
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dbPath)!);
+        var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zenith", "records.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
         _recordRepository = new RecordRepository(dbPath);
         
         Loaded += async (s, e) => 
         {
-            SaveLocationTextBox.Text = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+            SaveLocationTextBox.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), Constants.OUTPUT_PREFIX_PATH);
             await _recordRepository.InitializeAsync();
             await LoadHistoryAsync();
             LoadDevices();
@@ -231,7 +232,8 @@ public partial class MainWindow : Window
     {
         var dir = SaveLocationTextBox.Text;
         if (string.IsNullOrEmpty(dir)) dir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-        var filename = System.IO.Path.Combine(dir, $"Recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
+        Directory.CreateDirectory(dir);
+        var filename = Path.Combine(dir, $"Recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
         
         var selectedVideo = VideoSourceComboBox.SelectedItem as VideoSource;
         var config = new RecordingConfig
@@ -323,7 +325,8 @@ public partial class MainWindow : Window
         
         if (folders != null && folders.Count > 0)
         {
-            SaveLocationTextBox.Text = folders[0].Path.LocalPath;
+            var saveFolder = Path.Combine(folders[0].Path.LocalPath, Constants.OUTPUT_PREFIX_PATH);
+            SaveLocationTextBox.Text = saveFolder;
         }
     }
 
