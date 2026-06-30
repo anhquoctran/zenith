@@ -27,14 +27,14 @@ public partial class CountdownOverlay : Window
         base.OnOpened(e);
 
         // Position at center of the capture region
-        int centerX = _region.X + (_region.Width / 2) - ((int)Width / 2);
-        int centerY = _region.Y + (_region.Height / 2) - ((int)Height / 2);
+        var centerX = _region.X + (_region.Width / 2) - ((int)Width / 2);
+        var centerY = _region.Y + (_region.Height / 2) - ((int)Height / 2);
         Position = new PixelPoint(centerX, centerY);
     }
 
     public async Task RunCountdownAsync()
     {
-        for (int i = 3; i >= 1; i--)
+        for (var i = 3; i >= 1; i--)
         {
             await Dispatcher.UIThread.InvokeAsync(() =>
             {

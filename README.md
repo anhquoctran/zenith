@@ -1,6 +1,8 @@
-# Zenith Screen Recorder
+# Zenith
 
 Zenith is a modern, cross-platform screen recording application built with Avalonia UI and .NET 10. It utilizes FFmpeg for high-performance video encoding.
+
+![Zenith Screenshot](screenshots/sc_01.png)
 
 ## Features
 - **Cross-Platform UI:** Sleek and modern user interface powered by Avalonia UI.

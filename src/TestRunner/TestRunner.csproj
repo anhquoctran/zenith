@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Zenith.Interop\Zenith.Interop.csproj" />
     <ProjectReference Include="..\Zenith.Core\Zenith.Core.csproj" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

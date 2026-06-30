@@ -90,10 +90,10 @@
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,20,0,0">
                     <Button x:Name="RecordButton" Click="RecordButton_Click" Background="#FF4444" Foreground="White" Width="48" Height="48" CornerRadius="24" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Record">
-                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="Bold" Text="&#xf111;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf111;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
                     <Button x:Name="StopButton" Click="StopButton_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="Stop">
-                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="Bold" Text="&#xf04d;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf04d;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
                     <Button Content="⧉" Click="ShowWidget_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" FontSize="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Widget"/>
                 </StackPanel>

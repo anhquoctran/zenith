@@ -38,4 +38,10 @@
     <ProjectReference Include="..\Zenith.Core\Zenith.Core.csproj" />
     <ProjectReference Include="..\Zenith.Interop\Zenith.Interop.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Update="Assets\Fonts\fa-solid-900.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AvaloniaResource>
+  </ItemGroup>
 </Project>
