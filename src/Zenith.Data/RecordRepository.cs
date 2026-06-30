@@ -96,4 +96,11 @@ public class RecordRepository
         var sql = "SELECT * FROM Records ORDER BY CreatedAt DESC;";
         return await connection.QueryAsync<Record>(sql);
     }
+
+    public async Task ClearAllAsync()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        var sql = "DELETE FROM Records;";
+        await connection.ExecuteAsync(sql);
+    }
 }

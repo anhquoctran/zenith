@@ -201,22 +201,22 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 hMonitor = MonitorFromWindow(IntPtr.Zero, 1 /* MONITOR_DEFAULTTOPRIMARY */);
             }
 
-            IntPtr hString = IntPtr.Zero;
-            WindowsCreateString("Windows.Graphics.Capture.GraphicsCaptureItem", "Windows.Graphics.Capture.GraphicsCaptureItem".Length, out hString);
+            var hString = IntPtr.Zero;
+            _ = WindowsCreateString("Windows.Graphics.Capture.GraphicsCaptureItem", "Windows.Graphics.Capture.GraphicsCaptureItem".Length, out hString);
             
             try
             {
-                Guid iid = new Guid("3628E81B-3CAC-4C60-B7F4-23CE0E0C3356");
-                int hr = RoGetActivationFactory(hString, ref iid, out var factory);
+                var iid = new Guid("3628E81B-3CAC-4C60-B7F4-23CE0E0C3356");
+                var hr = RoGetActivationFactory(hString, ref iid, out var factory);
                 if (hr < 0) Marshal.ThrowExceptionForHR(hr);
                 
-                Guid captureItemGuid = new Guid("79C3F95B-31F7-4EC2-A464-632EF5D30760");
+                var captureItemGuid = new Guid("79C3F95B-31F7-4EC2-A464-632EF5D30760");
                 var ptr = factory.CreateForMonitor(hMonitor, ref captureItemGuid);
                 var captureItem = WinRT.MarshalInterface<GraphicsCaptureItem>.FromAbi(ptr);
 
                 // The capture frame will be at captureItem.Size (full monitor pixel size)
-                int captureW = captureItem!.Size.Width;
-                int captureH = captureItem.Size.Height;
+                var captureW = captureItem!.Size.Width;
+                var captureH = captureItem.Size.Height;
                 
                 // Store monitor origin for crop offset calculation in EncodeLoop
                 // CaptureRegion is in screen coords; captured texture starts at (0,0)
@@ -232,8 +232,8 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 }
                 
                 // Output dimensions: use config Width/Height (which may be a sub-region)
-                int outputW = _config.Width;
-                int outputH = _config.Height;
+                var outputW = _config.Width;
+                var outputH = _config.Height;
 
                 // Open AVFormatContext
                 AVFormatContext* fmtCtx = null;
@@ -242,7 +242,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 _fmtCtx = fmtCtx;
 
                 AVCodec* codec = null;
-                bool isHardware = false;
+                var isHardware = false;
 
                 if (_config.UseHardwareAcceleration)
                 {
@@ -287,7 +287,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 _codecCtx->height = outputH;
                 _codecCtx->time_base = new AVRational { num = 1, den = _config.Framerate };
                 
-                AVPixelFormat chosenPixFmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
+                var chosenPixFmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
                 if (codec->pix_fmts != null)
                 {
                     chosenPixFmt = *codec->pix_fmts;
@@ -314,11 +314,11 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     _codecCtx->flags |= ffmpeg.AV_CODEC_FLAG_GLOBAL_HEADER;
                 }
                 
-                int openRet = ffmpeg.avcodec_open2(_codecCtx, codec, null);
+                var openRet = ffmpeg.avcodec_open2(_codecCtx, codec, null);
                 if (openRet < 0 && isHardware)
                 {
                     Console.WriteLine($"Failed to open hardware encoder. Falling back to software. Error: {openRet}");
-                    AVCodecContext* tempCodecCtx = _codecCtx;
+                    var tempCodecCtx = _codecCtx;
                     ffmpeg.avcodec_free_context(&tempCodecCtx);
                     _codecCtx = null;
                     
@@ -372,7 +372,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
 
                 _session = _framePool.CreateCaptureSession(captureItem);
                 
-                _frameQueue = new System.Collections.Concurrent.BlockingCollection<Direct3D11CaptureFrame>();
+                _frameQueue = new System.Collections.Concurrent.BlockingCollection<Direct3D11CaptureFrame>(2);
                 
                 _framePool.FrameArrived += OnFrameArrived;
                 _session.StartCapture();
@@ -403,7 +403,11 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         var frame = sender.TryGetNextFrame();
         if (frame != null && _frameQueue != null && !_frameQueue.IsAddingCompleted)
         {
-            _frameQueue.Add(frame);
+            if (!_frameQueue.TryAdd(frame))
+            {
+                // Drop the frame if the encoding queue is full to prevent unbounded memory growth
+                frame.Dispose();
+            }
         }
         else
         {
@@ -416,7 +420,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         if (_frameQueue == null || _stagingTexture == null || _d3dDevice == null || _swsCtx == null) return;
         long lastPts = -1;
         TimeSpan? firstFrameTime = null;
-        TimeSpan totalPausedTime = TimeSpan.Zero;
+        var totalPausedTime = TimeSpan.Zero;
         TimeSpan? pauseStartTime = null;
         var d3dContext = _d3dDevice.ImmediateContext;
         
@@ -451,23 +455,23 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     if (dxgiInterfaceAccess == null) continue;
 
                     Guid iid = new Guid("6f15aaf2-d208-4e89-9ab4-489535d34f9c"); // ID3D11Texture2D
-                    IntPtr texturePtr = dxgiInterfaceAccess.GetInterface(ref iid);
+                    var texturePtr = dxgiInterfaceAccess.GetInterface(ref iid);
                     using var texture = new Vortice.Direct3D11.ID3D11Texture2D(texturePtr);
                     
-                    int cropX = 0;
-                    int cropY = 0;
+                    var cropX = 0;
+                    var cropY = 0;
                     d3dContext.CopySubresourceRegion(_stagingTexture, 0, 0, 0, 0, texture, 0, new Box(cropX, cropY, 0, cropX + _config.Width, cropY + _config.Height, 1));
                     
                     var mapped = d3dContext.Map(_stagingTexture, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
                     
-                    AVFrame* avFrame = ffmpeg.av_frame_alloc();
+                    var avFrame = ffmpeg.av_frame_alloc();
                     avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_YUV420P;
                     avFrame->width = _config.Width;
                     avFrame->height = _config.Height;
                     ffmpeg.av_frame_get_buffer(avFrame, 32);
 
-                    byte*[] srcData = new byte*[4] { (byte*)mapped.DataPointer, null, null, null };
-                    int[] srcLinesize = new int[4] { mapped.RowPitch, 0, 0, 0 };
+                    var srcData = new byte*[4] { (byte*)mapped.DataPointer, null, null, null };
+                    var srcLinesize = new int[4] { mapped.RowPitch, 0, 0, 0 };
 
                     ffmpeg.sws_scale(_swsCtx, srcData, srcLinesize, 0, _config.Height, avFrame->data, avFrame->linesize);
 
@@ -477,8 +481,8 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                         firstFrameTime = capturedFrame.SystemRelativeTime;
                     }
                     
-                    TimeSpan effectiveTime = capturedFrame.SystemRelativeTime - firstFrameTime.Value - totalPausedTime;
-                    long currentPts = (long)(effectiveTime.TotalSeconds * _config.Framerate);
+                    var effectiveTime = capturedFrame.SystemRelativeTime - firstFrameTime.Value - totalPausedTime;
+                    var currentPts = (long)(effectiveTime.TotalSeconds * _config.Framerate);
                     if (currentPts <= lastPts) {
                         currentPts = lastPts + 1;
                     }
@@ -489,7 +493,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     ffmpeg.avcodec_send_frame(_codecCtx, avFrame);
                     ffmpeg.av_frame_free(&avFrame);
 
-                    AVPacket* pkt = ffmpeg.av_packet_alloc();
+                    var pkt = ffmpeg.av_packet_alloc();
                     while (ffmpeg.avcodec_receive_packet(_codecCtx, pkt) == 0)
                     {
                         ffmpeg.av_packet_rescale_ts(pkt, _codecCtx->time_base, _videoStream->time_base);
@@ -507,7 +511,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         }
         catch (Exception ex)
         {
-            bool isDeviceRemoved = ex.Message.Contains("DXGI_ERROR_DEVICE_REMOVED") || 
+            var isDeviceRemoved = ex.Message.Contains("DXGI_ERROR_DEVICE_REMOVED") || 
                                    ex.Message.Contains("DXGI_ERROR_DEVICE_RESET") ||
                                    ex.HResult == unchecked((int)0x887A0005) || 
                                    ex.HResult == unchecked((int)0x887A0007);
@@ -519,7 +523,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     if (_codecCtx != null && _fmtCtx != null)
                     {
                         ffmpeg.avcodec_send_frame(_codecCtx, null);
-                        AVPacket* pkt = ffmpeg.av_packet_alloc();
+                        var pkt = ffmpeg.av_packet_alloc();
                         while (ffmpeg.avcodec_receive_packet(_codecCtx, pkt) == 0)
                         {
                             ffmpeg.av_packet_rescale_ts(pkt, _codecCtx->time_base, _videoStream->time_base);
@@ -576,10 +580,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 _framePool?.Dispose();
                 _frameQueue?.CompleteAdding();
                 
-                if (_encodeTask != null)
-                {
-                    _encodeTask.Wait();
-                }
+                _encodeTask?.Wait();
                 
                 // Drain encoder
                 if (_codecCtx != null)

@@ -16,6 +16,31 @@ using Path = System.IO.Path;
 
 namespace Zenith.UI;
 
+public class PathToBitmapConverter : Avalonia.Data.Converters.IValueConverter
+{
+    private static readonly System.Collections.Generic.Dictionary<string, Avalonia.Media.Imaging.Bitmap> _cache = new();
+    public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+    {
+        if (value is string path && File.Exists(path))
+        {
+            if (_cache.TryGetValue(path, out var bmp)) return bmp;
+            try
+            {
+                bmp = new Avalonia.Media.Imaging.Bitmap(path);
+                _cache[path] = bmp;
+                return bmp;
+            }
+            catch { return null; }
+        }
+        return null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 public partial class MainWindow : Window
 {
 #if WINDOWS
@@ -36,10 +61,16 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _previewTimer;
     private System.Drawing.Rectangle? _selectedRegion;
     private readonly DispatcherTimer _elapsedTimer;
+    private DispatcherTimer _statsTimer;
+    private Zenith.UI.Utils.HardwareMonitor _hardwareMonitor;
     private DateTime _recordingStartTime;
     private CameraOverlayWindow? _cameraOverlay;
     private WebcamCaptureEngine? _sharedWebcamEngine;
     private Avalonia.Media.Imaging.WriteableBitmap? _webcamBitmap;
+#if WINDOWS
+    private System.Drawing.Bitmap? _previewWinBmp;
+#endif
+    private Avalonia.Media.Imaging.WriteableBitmap? _previewAvaloniaBmp;
     private RecordingConfig? _currentConfig;
 
     public MainWindow()
@@ -121,20 +152,55 @@ public partial class MainWindow : Window
             var elapsed = DateTime.Now - _recordingStartTime;
             ElapsedTimeText.Text = elapsed.ToString(@"hh\:mm\:ss");
         };
+
+        _hardwareMonitor = new Zenith.UI.Utils.HardwareMonitor();
+        _statsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _statsTimer.Tick += StatsTimer_Tick;
+        _statsTimer.Start();
+
+        AppVersionText.Text = $"Zenith v1.0.0";
+        try {
+            FFmpeg.AutoGen.ffmpeg.LibraryVersionMap["avcodec"] = 63;
+            FFmpeg.AutoGen.ffmpeg.LibraryVersionMap["avdevice"] = 63;
+            FFmpeg.AutoGen.ffmpeg.LibraryVersionMap["avfilter"] = 12;
+            FFmpeg.AutoGen.ffmpeg.LibraryVersionMap["avformat"] = 63;
+            FFmpeg.AutoGen.ffmpeg.LibraryVersionMap["avutil"] = 61;
+            FFmpeg.AutoGen.ffmpeg.LibraryVersionMap["swresample"] = 7;
+            FFmpeg.AutoGen.ffmpeg.LibraryVersionMap["swscale"] = 10;
+            FFmpeg.AutoGen.ffmpeg.RootPath = AppContext.BaseDirectory;
+            FFmpegVersionText.Text = $"FFmpeg v{FFmpeg.AutoGen.ffmpeg.av_version_info()}";
+        } catch { }
+    }
+    
+    private void StatsTimer_Tick(object? sender, EventArgs e)
+    {
+        var stats = _hardwareMonitor.GetStats();
+        CpuUsageText.Text = $"CPU: {stats.cpu:F1}%";
+        MemUsageText.Text = $"Mem: {stats.memMB:F0} MB";
+        // GpuUsageText.Text = $"GPU: {stats.gpu:F1}%"; // Optional if implemented
     }
     
     private void PreviewTimer_Tick(object? sender, EventArgs e)
     {
         if (_recorderEngine == null || _recorderEngine.State != RecorderState.Idle)
         {
-            PreviewImage?.Source = null;
+            if (PreviewImage != null)
+            {
+                var oldBitmap = PreviewImage.Source as IDisposable;
+                PreviewImage.Source = null;
+                oldBitmap?.Dispose();
+            }
             return; // Paused preview to save memory
         }
 
 		if (VideoSourceComboBox == null || VideoSourceComboBox.SelectedItem is not VideoSource selectedVideo || selectedVideo.Id == "None" || (selectedVideo.Id != "Region" && selectedVideo.Width == 0))
 		{
 			if (PreviewImage != null)
+            {
+                var oldBitmap = PreviewImage.Source as IDisposable;
 			    PreviewImage.Source = null;
+                oldBitmap?.Dispose();
+            }
 			return;
 		}
 
@@ -152,15 +218,46 @@ public partial class MainWindow : Window
         #if WINDOWS
         try
         {
-            using var bmp = new System.Drawing.Bitmap(captureRect.Width, captureRect.Height);
-            using var g = System.Drawing.Graphics.FromImage(bmp);
-            g.CopyFromScreen(captureRect.X, captureRect.Y, 0, 0, bmp.Size, System.Drawing.CopyPixelOperation.SourceCopy);
-            
-            using var ms = new MemoryStream();
-            bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
-            ms.Position = 0;
+            if (_previewWinBmp == null || _previewWinBmp.Width != captureRect.Width || _previewWinBmp.Height != captureRect.Height)
+            {
+                _previewWinBmp?.Dispose();
+                _previewAvaloniaBmp?.Dispose();
+                
+                _previewWinBmp = new System.Drawing.Bitmap(captureRect.Width, captureRect.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                _previewAvaloniaBmp = new Avalonia.Media.Imaging.WriteableBitmap(
+                    new Avalonia.PixelSize(captureRect.Width, captureRect.Height),
+                    new Avalonia.Vector(96, 96),
+                    Avalonia.Platform.PixelFormat.Bgra8888,
+                    Avalonia.Platform.AlphaFormat.Premul);
+                    
+                if (PreviewImage != null)
+                {
+                    var old = PreviewImage.Source as IDisposable;
+                    PreviewImage.Source = _previewAvaloniaBmp;
+                    if (old != _previewAvaloniaBmp) old?.Dispose();
+                }
+            }
+
+            using (var g = System.Drawing.Graphics.FromImage(_previewWinBmp))
+            {
+                g.CopyFromScreen(captureRect.X, captureRect.Y, 0, 0, _previewWinBmp.Size, System.Drawing.CopyPixelOperation.SourceCopy);
+            }
+
+            var bmpData = _previewWinBmp.LockBits(new System.Drawing.Rectangle(0, 0, _previewWinBmp.Width, _previewWinBmp.Height), 
+                                                  System.Drawing.Imaging.ImageLockMode.ReadOnly, 
+                                                  _previewWinBmp.PixelFormat);
+            using (var fb = _previewAvaloniaBmp?.Lock())
+            {
+                var size = Math.Min(Math.Abs(bmpData.Stride) * _previewWinBmp.Height, fb?.RowBytes ?? 0 * fb?.Size.Height ?? 0);
+                unsafe 
+                {
+                    Buffer.MemoryCopy((void*)bmpData.Scan0, (void*)(fb?.Address ?? nint.MinValue), size, size);
+                }
+            }
+            _previewWinBmp.UnlockBits(bmpData);
+
             if (PreviewImage != null)
-                PreviewImage.Source = new Avalonia.Media.Imaging.Bitmap(ms);
+                PreviewImage.InvalidateVisual();
         }
         catch
         {
@@ -365,6 +462,8 @@ public partial class MainWindow : Window
         
         if (_currentConfig != null && File.Exists(_currentConfig.OutputPath))
         {
+            var thumbPath = await GenerateThumbnailAsync(_currentConfig.OutputPath);
+            
             var fileInfo = new FileInfo(_currentConfig.OutputPath);
             var record = new Record
             {
@@ -375,7 +474,7 @@ public partial class MainWindow : Window
                 CreatedAt = DateTime.Now,
                 Resolution = $"{_currentConfig.Width}x{_currentConfig.Height}",
                 Codec = "FFmpeg Native",
-                ThumbnailPath = ""
+                ThumbnailPath = thumbPath
             };
             await _recordRepository.InsertAsync(record);
         }
@@ -391,6 +490,30 @@ public partial class MainWindow : Window
 		RecordButton.IsEnabled = true;
         
         await LoadHistoryAsync(); // Refresh history
+    }
+
+    private async Task<string> GenerateThumbnailAsync(string videoPath)
+    {
+#if WINDOWS
+        try
+        {
+            var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(videoPath);
+            var thumbnail = await file.GetThumbnailAsync(Windows.Storage.FileProperties.ThumbnailMode.VideosView);
+            if (thumbnail != null)
+            {
+                var thumbPath = Path.Combine(Path.GetDirectoryName(videoPath)!, Path.GetFileNameWithoutExtension(videoPath) + "_thumb.jpg");
+                using var outStream = File.Create(thumbPath);
+                using var inStream = thumbnail.AsStreamForRead();
+                await inStream.CopyToAsync(outStream);
+                return thumbPath;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Thumbnail generation failed: {ex.Message}");
+        }
+#endif
+        return string.Empty;
     }
 
     private void ShowWidget_Click(object? sender, RoutedEventArgs e)
@@ -607,6 +730,24 @@ public partial class MainWindow : Window
 
     private async void BtnRefreshHistory_Click(object? sender, RoutedEventArgs e)
     {
+        await LoadHistoryAsync();
+    }
+
+    private async void BtnClearHistory_Click(object? sender, RoutedEventArgs e)
+    {
+        var records = await _recordRepository.GetAllAsync();
+        foreach (var record in records)
+        {
+            if (File.Exists(record.FilePath))
+            {
+                try { File.Delete(record.FilePath); } catch { }
+            }
+            if (!string.IsNullOrEmpty(record.ThumbnailPath) && File.Exists(record.ThumbnailPath))
+            {
+                try { File.Delete(record.ThumbnailPath); } catch { }
+            }
+        }
+        await _recordRepository.ClearAllAsync();
         await LoadHistoryAsync();
     }
 
