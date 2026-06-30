@@ -1,6 +1,13 @@
+using System;
 using System.Collections.Generic;
 
 namespace Zenith.Core;
+
+public class GPUDevice
+{
+    public string Name { get; set; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
+}
 
 public class VideoSource
 {
@@ -10,6 +17,7 @@ public class VideoSource
     public int Height { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
+    public string OwningGpuId { get; set; } = string.Empty;
 }
 
 public class AudioSource
@@ -29,6 +37,7 @@ public interface IDeviceEnumerator
     IEnumerable<VideoSource> GetVideoSources();
     IEnumerable<AudioSource> GetAudioSources();
     IEnumerable<WebcamSource> GetWebcams();
+    IEnumerable<GPUDevice> GetGPUDevices();
 }
 
 public class FallbackDeviceEnumerator : IDeviceEnumerator
@@ -36,4 +45,5 @@ public class FallbackDeviceEnumerator : IDeviceEnumerator
     public IEnumerable<VideoSource> GetVideoSources() => Array.Empty<VideoSource>();
     public IEnumerable<AudioSource> GetAudioSources() => Array.Empty<AudioSource>();
     public IEnumerable<WebcamSource> GetWebcams() => Array.Empty<WebcamSource>();
+    public IEnumerable<GPUDevice> GetGPUDevices() => Array.Empty<GPUDevice>();
 }

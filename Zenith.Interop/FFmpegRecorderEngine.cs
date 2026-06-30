@@ -108,14 +108,65 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             ffmpeg.RootPath = AppContext.BaseDirectory;
             ffmpeg.avdevice_register_all();
 
+            IDXGIAdapter1? selectedAdapter = null;
+            DXGI.CreateDXGIFactory1(out IDXGIFactory1? factory).CheckError();
+            if (factory != null)
+            {
+                var targetGpuId = config.SelectedGpuId;
+                if (targetGpuId == "Auto" && config.MonitorHandle != IntPtr.Zero)
+                {
+                    var adapterIndex = 0;
+                    while (factory.EnumAdapters1(adapterIndex, out var adapter).Success)
+                    {
+                        var outputIndex = 0;
+                        while (adapter.EnumOutputs(outputIndex, out var output).Success)
+                        {
+                            if (output.Description.Monitor == config.MonitorHandle)
+                            {
+                                selectedAdapter = adapter;
+                                break;
+                            }
+                            output.Dispose();
+                            outputIndex++;
+                        }
+                        if (selectedAdapter != null) break;
+                        adapter.Dispose();
+                        adapterIndex++;
+                    }
+                }
+                else if (targetGpuId != "Auto")
+                {
+                    var adapterIndex = 0;
+                    while (factory.EnumAdapters1(adapterIndex, out var adapter).Success)
+                    {
+                        if (adapter.Description1.Luid.ToString() == targetGpuId)
+                        {
+                            selectedAdapter = adapter;
+                            break;
+                        }
+                        adapter.Dispose();
+                        adapterIndex++;
+                    }
+                }
+            }
+
             Vortice.Direct3D11.D3D11.D3D11CreateDevice(
-                null,
-                DriverType.Hardware,
+                selectedAdapter,
+                selectedAdapter != null ? DriverType.Unknown : DriverType.Hardware,
                 DeviceCreationFlags.BgraSupport | DeviceCreationFlags.VideoSupport,
                 new[] { FeatureLevel.Level_11_1 },
                 out Vortice.Direct3D11.ID3D11Device? device, out Vortice.Direct3D11.ID3D11DeviceContext? context).CheckError();
             
             _d3dDevice = device;
+
+            if (selectedAdapter != null)
+            {
+                selectedAdapter.Dispose();
+            }
+            if (factory != null)
+            {
+                factory.Dispose();
+            }
 
             var dxgiDevice = _d3dDevice!.QueryInterface<IDXGIDevice>();
             CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.NativePointer, out var pUnknown);
@@ -205,22 +256,103 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 ffmpeg.avformat_alloc_output_context2(&fmtCtx, outFormat, null, _config.OutputPath ?? "output.mp4");
                 _fmtCtx = fmtCtx;
 
-                var codec = ffmpeg.avcodec_find_encoder(AVCodecID.AV_CODEC_ID_H264);
+                AVCodec* codec = null;
+                bool isHardware = false;
+
+                if (_config.UseHardwareAcceleration)
+                {
+                    var hwEncoders = new List<string>();
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        hwEncoders.Add("h264_videotoolbox");
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        hwEncoders.Add("h264_vaapi");
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        hwEncoders.Add("h264_nvenc");
+                        hwEncoders.Add("h264_amf");
+                        hwEncoders.Add("h264_qsv");
+                    }
+
+                    foreach (var name in hwEncoders)
+                    {
+                        codec = ffmpeg.avcodec_find_encoder_by_name(name);
+                        if (codec != null)
+                        {
+                            isHardware = true;
+                            Console.WriteLine($"Found hardware encoder: {name}");
+                            break;
+                        }
+                    }
+                }
+
+                if (codec == null)
+                {
+                    codec = ffmpeg.avcodec_find_encoder(AVCodecID.AV_CODEC_ID_H264);
+                    isHardware = false;
+                }
+
                 _videoStream = ffmpeg.avformat_new_stream(_fmtCtx, codec);
                 
                 _codecCtx = ffmpeg.avcodec_alloc_context3(codec);
                 _codecCtx->width = outputW;
                 _codecCtx->height = outputH;
                 _codecCtx->time_base = new AVRational { num = 1, den = _config.Framerate };
-                _codecCtx->pix_fmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
-                ffmpeg.av_opt_set(_codecCtx->priv_data, "preset", "ultrafast", 0);
+                
+                AVPixelFormat chosenPixFmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
+                if (codec->pix_fmts != null)
+                {
+                    chosenPixFmt = *codec->pix_fmts;
+                    var p = codec->pix_fmts;
+                    while (*p != AVPixelFormat.AV_PIX_FMT_NONE)
+                    {
+                        if (*p == AVPixelFormat.AV_PIX_FMT_YUV420P)
+                        {
+                            chosenPixFmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
+                            break;
+                        }
+                        p++;
+                    }
+                }
+                _codecCtx->pix_fmt = chosenPixFmt;
+
+                if (!isHardware)
+                {
+                    ffmpeg.av_opt_set(_codecCtx->priv_data, "preset", "ultrafast", 0);
+                }
                 
                 if ((_fmtCtx->oformat->flags & ffmpeg.AVFMT_GLOBALHEADER) != 0)
                 {
                     _codecCtx->flags |= ffmpeg.AV_CODEC_FLAG_GLOBAL_HEADER;
                 }
                 
-                ffmpeg.avcodec_open2(_codecCtx, codec, null);
+                int openRet = ffmpeg.avcodec_open2(_codecCtx, codec, null);
+                if (openRet < 0 && isHardware)
+                {
+                    Console.WriteLine($"Failed to open hardware encoder. Falling back to software. Error: {openRet}");
+                    AVCodecContext* tempCodecCtx = _codecCtx;
+                    ffmpeg.avcodec_free_context(&tempCodecCtx);
+                    _codecCtx = null;
+                    
+                    codec = ffmpeg.avcodec_find_encoder(AVCodecID.AV_CODEC_ID_H264);
+                    _codecCtx = ffmpeg.avcodec_alloc_context3(codec);
+                    _codecCtx->width = outputW;
+                    _codecCtx->height = outputH;
+                    _codecCtx->time_base = new AVRational { num = 1, den = _config.Framerate };
+                    _codecCtx->pix_fmt = AVPixelFormat.AV_PIX_FMT_YUV420P;
+                    ffmpeg.av_opt_set(_codecCtx->priv_data, "preset", "ultrafast", 0);
+                    
+                    if ((_fmtCtx->oformat->flags & ffmpeg.AVFMT_GLOBALHEADER) != 0)
+                    {
+                        _codecCtx->flags |= ffmpeg.AV_CODEC_FLAG_GLOBAL_HEADER;
+                    }
+                    
+                    openRet = ffmpeg.avcodec_open2(_codecCtx, codec, null);
+                }
+
                 ffmpeg.avcodec_parameters_from_context(_videoStream->codecpar, _codecCtx);
                 
                 ffmpeg.avio_open(&_fmtCtx->pb, _config.OutputPath ?? "output.mp4", ffmpeg.AVIO_FLAG_WRITE);
@@ -364,6 +496,42 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         }
         catch (Exception ex)
         {
+            bool isDeviceRemoved = ex.Message.Contains("DXGI_ERROR_DEVICE_REMOVED") || 
+                                   ex.Message.Contains("DXGI_ERROR_DEVICE_RESET") ||
+                                   ex.HResult == unchecked((int)0x887A0005) || 
+                                   ex.HResult == unchecked((int)0x887A0007);
+            if (isDeviceRemoved)
+            {
+                Console.WriteLine("eGPU / GPU device unplugged/removed during recording! Gracefully finishing output.");
+                try
+                {
+                    if (_codecCtx != null && _fmtCtx != null)
+                    {
+                        ffmpeg.avcodec_send_frame(_codecCtx, null);
+                        AVPacket* pkt = ffmpeg.av_packet_alloc();
+                        while (ffmpeg.avcodec_receive_packet(_codecCtx, pkt) == 0)
+                        {
+                            ffmpeg.av_packet_rescale_ts(pkt, _codecCtx->time_base, _videoStream->time_base);
+                            pkt->stream_index = _videoStream->index;
+                            ffmpeg.av_interleaved_write_frame(_fmtCtx, pkt);
+                            ffmpeg.av_packet_unref(pkt);
+                        }
+                        ffmpeg.av_packet_free(&pkt);
+                    }
+                    if (_fmtCtx != null)
+                    {
+                        ffmpeg.av_write_trailer(_fmtCtx);
+                        ffmpeg.avio_close(_fmtCtx->pb);
+                        _fmtCtx->pb = null;
+                        ffmpeg.avformat_free_context(_fmtCtx);
+                        _fmtCtx = null;
+                    }
+                }
+                catch (Exception cleanupEx)
+                {
+                    Console.WriteLine($"Error finalizing output during GPU unplug: {cleanupEx.Message}");
+                }
+            }
             ErrorOccurred?.Invoke(this, new RecorderErrorEventArgs { Exception = ex });
         }
     }

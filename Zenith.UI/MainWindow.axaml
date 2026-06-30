@@ -3,11 +3,12 @@
         xmlns:data="using:Zenith.Data"
         xmlns:core="using:Zenith.Core"
         x:Class="Zenith.UI.MainWindow"
-        Title="Zenith Screen Recorder"
+        Title="Zenith"
         Width="900" Height="760"
         MinHeight="760"
         MinWidth="900"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Background="#1E1E1E"
         TransparencyLevelHint="Mica"
         ExtendClientAreaToDecorationsHint="True">
@@ -63,6 +64,22 @@
                         <!-- Waveform drawn here via code-behind -->
                     </Canvas>
                 </Border>
+
+                  <CheckBox x:Name="HardwareAccelerationCheckBox" Content="Use Hardware Acceleration (GPU)" IsChecked="True" Foreground="#AAAAAA" Margin="0,5,0,0"/>
+
+                 <TextBlock Text="Hardware Encoder" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
+                 <ComboBox x:Name="GpuComboBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="GpuComboBox_SelectionChanged">
+                     <ComboBox.ItemTemplate>
+                         <DataTemplate x:DataType="core:GPUDevice">
+                             <TextBlock Text="{Binding Name}" />
+                         </DataTemplate>
+                     </ComboBox.ItemTemplate>
+                 </ComboBox>
+                 
+                 <StackPanel x:Name="GpuWarningPanel" Orientation="Horizontal" Spacing="5" Margin="0,5,0,0" IsVisible="False">
+                     <TextBlock Text="⚠" Foreground="#FFCC00" FontWeight="Bold" VerticalAlignment="Center"/>
+                     <TextBlock Text="Selected GPU differs from display GPU. Cross-adapter encoding may reduce performance." Foreground="#FFCC00" TextWrapping="Wrap" FontSize="11" VerticalAlignment="Center"/>
+                 </StackPanel>
 
                 <TextBlock Text="Save Location" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
                 <Grid ColumnDefinitions="*,Auto">

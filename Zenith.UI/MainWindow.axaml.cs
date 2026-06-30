@@ -1,16 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using Zenith.Core;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Zenith.Interop;
-using Zenith.Data;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
+using Zenith.Core;
+using Zenith.Data;
+using Zenith.Interop;
 
 namespace Zenith.UI;
 
@@ -21,23 +21,40 @@ public partial class MainWindow : Window
     private static extern IntPtr MonitorFromPoint(System.Drawing.Point pt, uint dwFlags);
 #endif
     private RecordingWidget? _widget;
-    private AudioCaptureEngine _audioEngine;
-    private IRecorderEngine _recorderEngine;
-    private Polyline _waveformLine;
-    private List<double> _amplitudes = new();
+    private readonly AudioCaptureEngine _audioEngine;
+    private readonly IRecorderEngine _recorderEngine;
+    private readonly Polyline _waveformLine;
+    private readonly List<double> _amplitudes = [];
     private const int MaxSamples = 100;
-    private RecordRepository _recordRepository;
-    private IDeviceEnumerator _deviceEnumerator;
-    private DispatcherTimer _previewTimer;
+    private readonly RecordRepository _recordRepository;
+    private readonly IDeviceEnumerator _deviceEnumerator;
+    private readonly DispatcherTimer _previewTimer;
     private System.Drawing.Rectangle? _selectedRegion;
-    private DispatcherTimer _elapsedTimer;
+    private readonly DispatcherTimer _elapsedTimer;
     private DateTime _recordingStartTime;
 
     public MainWindow()
     {
         InitializeComponent();
 
-        _waveformLine = new Polyline
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+		{
+			_deviceEnumerator = new WindowsDeviceEnumerator();
+		}
+		else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+		{
+			_deviceEnumerator = new MacOSDeviceEnumerator();
+		}
+		else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+		{
+			_deviceEnumerator = new LinuxDeviceEnumerator();
+		}
+		else
+		{
+			_deviceEnumerator = new FallbackDeviceEnumerator();
+		}
+
+		_waveformLine = new Polyline
         {
             Stroke = new SolidColorBrush(Color.Parse("#007ACC")),
             StrokeThickness = 2,
@@ -89,14 +106,13 @@ public partial class MainWindow : Window
         if (_recorderEngine.State != RecorderState.Idle)
             return; // Don't steal CPU during active recording
 
-        var selectedVideo = VideoSourceComboBox.SelectedItem as VideoSource;
-        if (selectedVideo == null || selectedVideo.Id == "None" || (selectedVideo.Id != "Region" && selectedVideo.Width == 0))
-        {
-            PreviewImage.Source = null;
-            return;
-        }
+		if (VideoSourceComboBox.SelectedItem is not VideoSource selectedVideo || selectedVideo.Id == "None" || (selectedVideo.Id != "Region" && selectedVideo.Width == 0))
+		{
+			PreviewImage.Source = null;
+			return;
+		}
 
-        System.Drawing.Rectangle captureRect;
+		System.Drawing.Rectangle captureRect;
         if (selectedVideo.Id == "Region")
         {
             if (!_selectedRegion.HasValue || _selectedRegion.Value.Width <= 0 || _selectedRegion.Value.Height <= 0) return;
@@ -128,11 +144,11 @@ public partial class MainWindow : Window
     
     private void LoadDevices()
     {
-#if WINDOWS
-        _deviceEnumerator = new WindowsDeviceEnumerator();
-#else
-        _deviceEnumerator = new FallbackDeviceEnumerator();
-#endif
+        var gpus = new List<GPUDevice>();
+        gpus.Add(new GPUDevice { Name = "Auto (Zero-Copy)", Id = "Auto" });
+        gpus.AddRange(_deviceEnumerator.GetGPUDevices());
+        GpuComboBox.ItemsSource = gpus;
+        GpuComboBox.SelectedIndex = 0;
         var videoSources = new List<VideoSource>();
         videoSources.AddRange(_deviceEnumerator.GetVideoSources());
         if (videoSources.Count == 0) videoSources.Add(new VideoSource { Name = "No Displays Found", Id = "None" });
@@ -214,7 +230,9 @@ public partial class MainWindow : Window
         var config = new RecordingConfig
         {
             OutputPath = filename,
-            Framerate = 60
+            Framerate = 60,
+            UseHardwareAcceleration = HardwareAccelerationCheckBox.IsChecked == true,
+            SelectedGpuId = (GpuComboBox.SelectedItem as GPUDevice)?.Id ?? "Auto"
         };
 
         if (selectedVideo?.Id == "Region" && _selectedRegion.HasValue)
@@ -327,6 +345,36 @@ public partial class MainWindow : Window
         {
             _selectedRegion = null;
         }
+        UpdateGpuWarning();
+    }
+
+    private void UpdateGpuWarning()
+    {
+        if (GpuComboBox == null || GpuWarningPanel == null) return;
+        
+        if (GpuComboBox.SelectedItem is GPUDevice selectedGpu &&
+            VideoSourceComboBox.SelectedItem is VideoSource selectedVideo)
+        {
+            if (selectedGpu.Id != "Auto" && 
+                !string.IsNullOrEmpty(selectedVideo.OwningGpuId) && 
+                selectedGpu.Id != selectedVideo.OwningGpuId)
+            {
+                GpuWarningPanel.IsVisible = true;
+            }
+            else
+            {
+                GpuWarningPanel.IsVisible = false;
+            }
+        }
+        else
+        {
+            GpuWarningPanel.IsVisible = false;
+        }
+    }
+
+    private void GpuComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        UpdateGpuWarning();
     }
 
     protected override void OnClosed(System.EventArgs e)

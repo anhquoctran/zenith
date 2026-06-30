@@ -22,10 +22,11 @@ public class WindowsDeviceEnumerator : IDeviceEnumerator
             DXGI.CreateDXGIFactory1(out IDXGIFactory1? factory).CheckError();
             if (factory != null)
             {
-                int adapterIndex = 0;
+                var adapterIndex = 0;
                 while (factory.EnumAdapters1(adapterIndex, out var adapter).Success)
                 {
-                    int outputIndex = 0;
+                    var adapterDesc = adapter.Description1;
+                    var outputIndex = 0;
                     while (adapter.EnumOutputs(outputIndex, out var output).Success)
                     {
                         var desc = output.Description;
@@ -38,7 +39,8 @@ public class WindowsDeviceEnumerator : IDeviceEnumerator
                             Width = width,
                             Height = height,
                             X = desc.DesktopCoordinates.Left,
-                            Y = desc.DesktopCoordinates.Top
+                            Y = desc.DesktopCoordinates.Top,
+                            OwningGpuId = adapterDesc.Luid.ToString()
                         });
                         output.Dispose();
                         outputIndex++;
@@ -60,6 +62,38 @@ public class WindowsDeviceEnumerator : IDeviceEnumerator
             sources.Add(new VideoSource { Name = "No Devices Found", Id = "None", Width = 0, Height = 0 });
 #endif
         return sources;
+    }
+
+    public IEnumerable<GPUDevice> GetGPUDevices()
+    {
+        var gpus = new List<GPUDevice>();
+#if WINDOWS
+        try
+        {
+            DXGI.CreateDXGIFactory1(out IDXGIFactory1? factory).CheckError();
+            if (factory != null)
+            {
+                var adapterIndex = 0;
+                while (factory.EnumAdapters1(adapterIndex, out var adapter).Success)
+                {
+                    var desc = adapter.Description1;
+                    gpus.Add(new GPUDevice
+                    {
+                        Name = desc.Description,
+                        Id = desc.Luid.ToString()
+                    });
+                    adapter.Dispose();
+                    adapterIndex++;
+                }
+                factory.Dispose();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error enumerating GPUs: {ex.Message}");
+        }
+#endif
+        return gpus;
     }
 
     public IEnumerable<AudioSource> GetAudioSources()

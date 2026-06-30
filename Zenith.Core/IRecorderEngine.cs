@@ -41,6 +41,8 @@ public class RecordingConfig
     /// The HMONITOR handle for the target monitor. If IntPtr.Zero, defaults to primary.
     /// </summary>
     public IntPtr MonitorHandle { get; set; } = IntPtr.Zero;
+    public bool UseHardwareAcceleration { get; set; } = false;
+    public string SelectedGpuId { get; set; } = "Auto";
 }
 
 public interface IRecorderEngine : IDisposable

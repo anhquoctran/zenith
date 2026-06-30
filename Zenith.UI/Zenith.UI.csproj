@@ -14,18 +14,18 @@
     <Authors>Zenith</Authors>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Assets\pause.png" />
-    <None Remove="Assets\record.png" />
-    <None Remove="Assets\stop.png" />
+    <None Remove="Assets/pause.png" />
+    <None Remove="Assets/record.png" />
+    <None Remove="Assets/stop.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Assets\pause.png">
+    <Content Include="Assets/pause.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\record.png">
+    <Content Include="Assets/record.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\stop.png">
+    <Content Include="Assets/stop.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
