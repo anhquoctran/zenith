@@ -40,6 +40,7 @@ public partial class MainWindow : Window
     private CameraOverlayWindow? _cameraOverlay;
     private WebcamCaptureEngine? _sharedWebcamEngine;
     private Avalonia.Media.Imaging.WriteableBitmap? _webcamBitmap;
+    private RecordingConfig? _currentConfig;
 
     public MainWindow()
     {
@@ -260,7 +261,7 @@ public partial class MainWindow : Window
         AudioSourceComboBox.IsEnabled = false;
         HardwareAccelerationCheckBox.IsEnabled = false;
         GpuComboBox.IsEnabled = false;
-        if (SelectFolderButton != null) SelectFolderButton.IsEnabled = false;
+        SelectFolderButton?.IsEnabled = false;
 
         var dir = SaveLocationTextBox.Text;
         if (string.IsNullOrEmpty(dir)) dir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
@@ -311,6 +312,7 @@ public partial class MainWindow : Window
         await _recorderEngine.InitializeAsync(config);
         await _recorderEngine.StartAsync();
 
+        _currentConfig = config;
         _recordingStartTime = DateTime.Now;
         _elapsedTimer.Start();
         ElapsedTimeText.IsVisible = true;
@@ -354,27 +356,39 @@ public partial class MainWindow : Window
         AudioSourceComboBox.IsEnabled = true;
         HardwareAccelerationCheckBox.IsEnabled = true;
         GpuComboBox.IsEnabled = true;
-        if (SelectFolderButton != null) SelectFolderButton.IsEnabled = true;
+        SelectFolderButton?.IsEnabled = true;
 
         _elapsedTimer.Stop();
         ElapsedTimeText.IsVisible = false;
         ElapsedTimeText.Text = "00:00:00";
         await _recorderEngine.StopAsync();
         
-        // Hide window corner overlay, restore preview overlay
-        if (_cameraOverlay != null)
+        if (_currentConfig != null && File.Exists(_currentConfig.OutputPath))
         {
-            _cameraOverlay.Close();
-            _cameraOverlay = null;
-        }
-        var selectedCamera = CameraComboBox.SelectedItem as WebcamSource;
-        if (selectedCamera != null && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None")
-        {
-            if (CameraPreviewOverlay != null)
-                CameraPreviewOverlay.IsVisible = true;
+            var fileInfo = new FileInfo(_currentConfig.OutputPath);
+            var record = new Record
+            {
+                FileName = Path.GetFileName(_currentConfig.OutputPath),
+                FilePath = _currentConfig.OutputPath,
+                Duration = DateTime.Now - _recordingStartTime,
+                FileSize = fileInfo.Length,
+                CreatedAt = DateTime.Now,
+                Resolution = $"{_currentConfig.Width}x{_currentConfig.Height}",
+                Codec = "FFmpeg Native",
+                ThumbnailPath = ""
+            };
+            await _recordRepository.InsertAsync(record);
         }
 
-        RecordButton.IsEnabled = true;
+		// Hide window corner overlay, restore preview overlay
+		_cameraOverlay?.Close();
+		_cameraOverlay = null;
+		if (CameraComboBox.SelectedItem is WebcamSource selectedCamera && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None")
+		{
+			CameraPreviewOverlay?.IsVisible = true;
+		}
+
+		RecordButton.IsEnabled = true;
         
         await LoadHistoryAsync(); // Refresh history
     }
@@ -420,7 +434,7 @@ public partial class MainWindow : Window
 
     private void OnWebcamFrameArrived(object? sender, FrameArrivedEventArgs e)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        Dispatcher.UIThread.Post(() =>
         {
             try
             {
@@ -428,16 +442,16 @@ public partial class MainWindow : Window
                 {
                     _webcamBitmap?.Dispose();
                     _webcamBitmap = new Avalonia.Media.Imaging.WriteableBitmap(
-                        new Avalonia.PixelSize(e.Width, e.Height),
-                        new Avalonia.Vector(96, 96),
+                        new PixelSize(e.Width, e.Height),
+                        new Vector(96, 96),
                         Avalonia.Platform.PixelFormat.Bgra8888,
                         Avalonia.Platform.AlphaFormat.Premul);
                 }
 
                 using (var fb = _webcamBitmap.Lock())
                 {
-                    int size = Math.Min(e.Stride * e.Height, e.DataArray.Length);
-                    System.Runtime.InteropServices.Marshal.Copy(e.DataArray, 0, fb.Address, size);
+                    var size = Math.Min(e.Stride * e.Height, e.DataArray.Length);
+					Marshal.Copy(e.DataArray, 0, fb.Address, size);
                 }
 
                 // Always ensure the source is bound (it may have been null if overlay was hidden during creation)
@@ -480,7 +494,7 @@ public partial class MainWindow : Window
             {
                 // Revert if canceled
                 _selectedRegion = null;
-                comboBox.SelectedIndex = 0;
+                comboBox?.SelectedIndex = 0;
             }
         }
         else
@@ -496,15 +510,14 @@ public partial class MainWindow : Window
         var comboBox = sender as ComboBox;
         var selectedCamera = comboBox?.SelectedItem as WebcamSource;
 
-        bool hasCamera = selectedCamera != null && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None";
-        bool isRecording = _recorderEngine != null && _recorderEngine.State != RecorderState.Idle;
+        var hasCamera = selectedCamera != null && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None";
+        var isRecording = _recorderEngine != null && _recorderEngine.State != RecorderState.Idle;
 
         if (hasCamera)
         {
             if (isRecording)
             {
-                if (CameraPreviewOverlay != null)
-                    CameraPreviewOverlay.IsVisible = false;
+                CameraPreviewOverlay?.IsVisible = false;
                 if (_cameraOverlay == null)
                 {
                     _cameraOverlay = new CameraOverlayWindow();
@@ -517,20 +530,16 @@ public partial class MainWindow : Window
             }
             else
             {
-                if (CameraPreviewOverlay != null)
-                    CameraPreviewOverlay.IsVisible = true;
-                if (_cameraOverlay != null)
-                {
-                    _cameraOverlay.Close();
-                    _cameraOverlay = null;
-                }
-            }
+                CameraPreviewOverlay?.IsVisible = true;
+				_cameraOverlay?.Close();
+				_cameraOverlay = null;
+			}
 
             if (_sharedWebcamEngine == null)
             {
                 _sharedWebcamEngine = new WebcamCaptureEngine();
                 _sharedWebcamEngine.FrameArrived += OnWebcamFrameArrived;
-                string devName = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ? "video=" + selectedCamera.Name : selectedCamera.Id;
+                var devName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "video=" + selectedCamera.Name : selectedCamera.Id;
                 
                 Task.Run(() => 
                 {
