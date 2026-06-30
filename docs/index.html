@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith | Modern Cross-Platform Screen Recorder</title>
+    <meta name="description" content="Zenith is a modern, high-performance screen recording application built with Avalonia UI and FFmpeg.">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <header id="navbar">
+        <div class="container nav-container">
+            <div class="logo">
+                <img src="assets/logo.png" alt="Zenith Logo" width="32" height="32">
+                <span>Zenith</span>
+            </div>
+            <nav>
+                <a href="#features">Features</a>
+                <a href="#architecture">Architecture</a>
+                <a href="https://github.com/anhquoctran/zenith" target="_blank" class="nav-github"><i class="fab fa-github"></i> GitHub</a>
+                <a href="#download" class="btn btn-primary btn-small">Download</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" id="home">
+            <div class="container hero-container">
+                <div class="hero-content reveal">
+                    <div class="badge">Open Source v1.0</div>
+                    <h1 class="gradient-text">Capture Brilliance, <br>Zero Compromise.</h1>
+                    <p>A modern, highly optimized cross-platform screen recording application powered by Avalonia UI and FFmpeg native integration.</p>
+                    <div class="hero-cta">
+                        <a href="#download" class="btn btn-primary"><i class="fas fa-download"></i> Get Zenith</a>
+                        <a href="#features" class="btn btn-secondary">Explore Features</a>
+                    </div>
+                </div>
+                <div class="hero-image-wrapper reveal delay-1">
+                    <div class="glass-panel screenshot-panel">
+                        <img src="assets/sc_01.png" alt="Zenith App Screenshot" class="hero-screenshot">
+                        <div class="glow-effect"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-header reveal">
+                    <h2>Powered by Native Technologies</h2>
+                    <p>Designed for absolute performance and seamless user experience across operating systems.</p>
+                </div>
+
+                <div class="bento-grid">
+                    <div class="bento-card col-span-2 reveal">
+                        <div class="bento-content">
+                            <div class="icon-box"><i class="fas fa-bolt"></i></div>
+                            <h3>FFmpeg Native Engine</h3>
+                            <p>Direct low-level C++ interop with FFmpeg 6.x and DirectShow/V4L2 for hardware-accelerated video encoding with zero overhead.</p>
+                        </div>
+                        <div class="bento-decoration gradient-1"></div>
+                    </div>
+
+                    <div class="bento-card reveal delay-1">
+                        <div class="bento-content">
+                            <div class="icon-box"><i class="fab fa-windows"></i> <i class="fab fa-apple"></i> <i class="fab fa-linux"></i></div>
+                            <h3>Avalonia UI</h3>
+                            <p>Write once, run everywhere. A sleek and responsive interface running on .NET 10.</p>
+                        </div>
+                    </div>
+
+                    <div class="bento-card reveal">
+                        <div class="bento-content">
+                            <div class="icon-box"><i class="fas fa-crop-alt"></i></div>
+                            <h3>Region Selection</h3>
+                            <p>Precisely capture the area you need with an intuitive drag-to-select overlay.</p>
+                        </div>
+                    </div>
+
+                    <div class="bento-card col-span-2 reveal delay-1">
+                        <div class="bento-content">
+                            <div class="icon-box"><i class="fas fa-video"></i></div>
+                            <h3>Picture-in-Picture Webcam</h3>
+                            <p>Overlay your hardware webcam directly into the corner of your screen recording. Fully resizable and dynamically scaled.</p>
+                        </div>
+                        <div class="bento-decoration gradient-2"></div>
+                    </div>
+
+                    <div class="bento-card col-span-3 highlight-card reveal">
+                        <div class="bento-content">
+                            <div class="flex-row">
+                                <div class="text-side">
+                                    <div class="icon-box"><i class="fas fa-layer-group"></i></div>
+                                    <h3>Floating Widgets</h3>
+                                    <p>When you start recording, Zenith gracefully steps out of your way and provides a non-intrusive floating control widget that stays on top.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section" id="download">
+            <div class="container">
+                <div class="glass-panel cta-panel reveal">
+                    <h2>Ready to Record?</h2>
+                    <p>Join the development or download the latest release of Zenith for your platform.</p>
+                    <div class="download-grid">
+                        <a href="https://github.com/anhquoctran/zenith/releases" target="_blank" class="download-card">
+                            <i class="fab fa-windows"></i>
+                            <div>
+                                <strong>Windows x64</strong>
+                                <span>Standalone .exe</span>
+                            </div>
+                        </a>
+                        <a href="https://github.com/anhquoctran/zenith/releases" target="_blank" class="download-card">
+                            <i class="fab fa-apple"></i>
+                            <div>
+                                <strong>macOS</strong>
+                                <span>Intel & Silicon</span>
+                            </div>
+                        </a>
+                        <a href="https://github.com/anhquoctran/zenith/releases" target="_blank" class="download-card">
+                            <i class="fab fa-linux"></i>
+                            <div>
+                                <strong>Linux x64</strong>
+                                <span>Binary</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-container">
+            <div class="footer-logo">
+                <img src="assets/logo.png" alt="Zenith" width="24" height="24">
+                <span>Zenith Screen Recorder</span>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/anhquoctran/zenith"><i class="fab fa-github"></i> Repository</a>
+                <a href="#"><i class="fas fa-bug"></i> Report Issue</a>
+            </div>
+            <div class="footer-copy">
+                &copy; 2026 anhquoctran. Released under the MIT License.
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
