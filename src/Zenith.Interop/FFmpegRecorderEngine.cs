@@ -1,8 +1,5 @@
-using System;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using FFmpeg.AutoGen;
+using System.Runtime.InteropServices;
 using Zenith.Core;
 
 #if WINDOWS
