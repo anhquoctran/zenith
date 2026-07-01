@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using System.Collections.Generic;
+using System.Linq;
 using Zenith.Core;
 using Avalonia.Platform.Storage;
 
@@ -9,6 +10,7 @@ namespace Zenith.UI;
 public partial class LayerPropertiesWindow : Window
 {
     private readonly VideoLayer _layer;
+    private readonly IDeviceEnumerator? _deviceEnumerator;
 
     public LayerPropertiesWindow()
     {
@@ -16,13 +18,14 @@ public partial class LayerPropertiesWindow : Window
         _layer = new VideoLayer(); // Default for designer
     }
 
-    public LayerPropertiesWindow(VideoLayer layer) : this()
+    public LayerPropertiesWindow(VideoLayer layer, IDeviceEnumerator? deviceEnumerator = null) : this()
     {
         _layer = layer;
+        _deviceEnumerator = deviceEnumerator;
         
         NameTextBox.Text = _layer.Name;
         
-        if (_layer.Type == LayerType.Text)
+        if (_layer.Type == LayerType.Text || _layer.Type == LayerType.FpsCounter)
         {
             TextPropertiesPanel.IsVisible = true;
             TextContentTextBox.Text = _layer.TextContent;
@@ -34,6 +37,20 @@ public partial class LayerPropertiesWindow : Window
         {
             FilePropertiesPanel.IsVisible = true;
             FilePathTextBox.Text = _layer.FilePath;
+        }
+        else if (_layer.Type == LayerType.Camera)
+        {
+            CameraPropertiesPanel.IsVisible = true;
+            if (_deviceEnumerator != null)
+            {
+                var webcams = _deviceEnumerator.GetWebcams().ToList();
+                WebcamComboBox.ItemsSource = webcams;
+                WebcamComboBox.SelectedItem = webcams.FirstOrDefault(w => w.Id == _layer.SourceId);
+                if (WebcamComboBox.SelectedItem == null && webcams.Count > 0)
+                {
+                    WebcamComboBox.SelectedIndex = 0;
+                }
+            }
         }
     }
 
@@ -58,7 +75,7 @@ public partial class LayerPropertiesWindow : Window
     {
         _layer.Name = NameTextBox.Text ?? "New Layer";
         
-        if (_layer.Type == LayerType.Text)
+        if (_layer.Type == LayerType.Text || _layer.Type == LayerType.FpsCounter)
         {
             _layer.TextContent = TextContentTextBox.Text ?? "";
             _layer.FontFamily = FontFamilyTextBox.Text ?? "Arial";
@@ -68,6 +85,13 @@ public partial class LayerPropertiesWindow : Window
         else if (_layer.Type == LayerType.Image || _layer.Type == LayerType.VideoFile)
         {
             _layer.FilePath = FilePathTextBox.Text ?? "";
+        }
+        else if (_layer.Type == LayerType.Camera)
+        {
+            if (WebcamComboBox.SelectedItem is WebcamSource webcam)
+            {
+                _layer.SourceId = webcam.Id;
+            }
         }
 
         Close();

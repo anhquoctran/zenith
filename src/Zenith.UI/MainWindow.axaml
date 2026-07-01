@@ -181,6 +181,8 @@
                                 <ComboBoxItem Content="Image" />
                                 <ComboBoxItem Content="Video File" />
                                 <ComboBoxItem Content="Text" />
+                                <ComboBoxItem Content="Camera" />
+                                <ComboBoxItem Content="FPS Counter" />
                             </ComboBox>
 
                             <Button Grid.Column="3" Content="^" x:Name="MoveUpVideoLayerButton" Click="MoveUpVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Move Up"/>

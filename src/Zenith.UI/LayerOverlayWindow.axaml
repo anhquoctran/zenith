@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Zenith.UI.LayerOverlayWindow"
+        Title="Layer Overlay"
+        SystemDecorations="None"
+        Topmost="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        WindowStartupLocation="Manual">
+    <Grid>
+        <!-- For Camera -->
+        <Border x:Name="CameraBorder" Background="#CC000000" CornerRadius="8" BorderBrush="#333333" BorderThickness="1" ClipToBounds="True" IsVisible="False">
+            <Image x:Name="CameraImage" Stretch="UniformToFill" />
+        </Border>
+        
+        <!-- For FPS Counter -->
+        <TextBlock x:Name="FpsText" IsVisible="False" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold"/>
+    </Grid>
+</Window>

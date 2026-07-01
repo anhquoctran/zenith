@@ -61,8 +61,7 @@ public partial class MainWindow : Window
     private DispatcherTimer _statsTimer;
     private Zenith.UI.Utils.HardwareMonitor _hardwareMonitor;
     private DateTime _recordingStartTime;
-    private CameraOverlayWindow? _cameraOverlay;
-    private WebcamCaptureEngine? _sharedWebcamEngine;
+    private readonly System.Collections.Generic.List<LayerOverlayWindow> _activeOverlays = new();
     private Avalonia.Media.Imaging.WriteableBitmap? _webcamBitmap;
 #if WINDOWS
     private System.Drawing.Bitmap? _previewWinBmp;
@@ -344,6 +343,8 @@ public partial class MainWindow : Window
                     "Image" => LayerType.Image,
                     "Video File" => LayerType.VideoFile,
                     "Text" => LayerType.Text,
+                    "Camera" => LayerType.Camera,
+                    "FPS Counter" => LayerType.FpsCounter,
                     _ => LayerType.Screen
                 },
                 Width = 1920,
@@ -428,7 +429,7 @@ public partial class MainWindow : Window
     {
         if (sender is Button btn && btn.DataContext is VideoLayer layer)
         {
-            var propsWindow = new LayerPropertiesWindow(layer);
+            var propsWindow = new LayerPropertiesWindow(layer, _deviceEnumerator);
             propsWindow.ShowDialog(this);
         }
     }
@@ -484,6 +485,20 @@ public partial class MainWindow : Window
         RecordButton.IsEnabled = false;
         StopButton.IsEnabled = true;
 
+        // Spawn overlays for Camera and FPS Counter
+        foreach (var layer in config.VideoLayers)
+        {
+            if (layer.Type == LayerType.Camera || layer.Type == LayerType.FpsCounter)
+            {
+                if (layer.IsVisible)
+                {
+                    var overlay = new LayerOverlayWindow(layer);
+                    overlay.Show();
+                    _activeOverlays.Add(overlay);
+                }
+            }
+        }
+
         ShowWidget_Click(null, null);
     }
 
@@ -504,6 +519,13 @@ public partial class MainWindow : Window
         _elapsedTimer.Stop();
         ElapsedTimeText.Text = "00:00:00";
         await _recorderEngine.StopAsync();
+        
+        // Close and cleanup active overlays
+        foreach (var overlay in _activeOverlays)
+        {
+            overlay.Close();
+        }
+        _activeOverlays.Clear();
         
         if (_currentConfig != null && File.Exists(_currentConfig.OutputPath))
         {
@@ -649,19 +671,18 @@ public partial class MainWindow : Window
 	protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
+        
+        foreach (var overlay in _activeOverlays)
+        {
+            overlay.Close();
+        }
+        _activeOverlays.Clear();
+        
+        _widget?.Close();
+        _widget = null;
+
         _previewTimer?.Stop();
         
-        if (_sharedWebcamEngine != null)
-        {
-            _sharedWebcamEngine.Dispose();
-            _sharedWebcamEngine = null;
-        }
-
-        if (_cameraOverlay != null)
-        {
-            _cameraOverlay.Close();
-            _cameraOverlay = null;
-        }
         _audioEngine.Stop();
         _audioEngine.Dispose();
         _recorderEngine.Dispose();

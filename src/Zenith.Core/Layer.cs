@@ -9,7 +9,9 @@ public enum LayerType
     Screen,
     VideoFile,
     Image,
-    Text
+    Text,
+    Camera,
+    FpsCounter
 }
 
 public enum AudioLayerType
