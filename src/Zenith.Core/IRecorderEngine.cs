@@ -45,6 +45,7 @@ public interface IRecorderEngine : IDisposable
     event EventHandler<RecorderStatusEventArgs>? StatusChanged;
     event EventHandler<RecorderErrorEventArgs>? ErrorOccurred;
     event EventHandler<float>? WaveformDataAvailable;
+    event EventHandler<int>? FpsUpdated;
 
     RecorderState State { get; }
 

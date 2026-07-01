@@ -19,6 +19,14 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
     public event EventHandler<RecorderStatusEventArgs>? StatusChanged;
     public event EventHandler<RecorderErrorEventArgs>? ErrorOccurred;
     public event EventHandler<float>? WaveformDataAvailable;
+    public event EventHandler<int>? FpsUpdated;
+
+    private IntPtr _monitorHandle = IntPtr.Zero;
+
+    // Compositing Cache to prevent per-frame allocations
+    private readonly Dictionary<string, System.Drawing.Bitmap> _imageCache = new();
+    private readonly Dictionary<string, System.Drawing.Font> _fontCache = new();
+    private readonly Dictionary<string, System.Drawing.SolidBrush> _brushCache = new();
 
     public RecorderState State { get; private set; } = RecorderState.Idle;
 
@@ -412,6 +420,11 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         TimeSpan? pauseStartTime = null;
         var d3dContext = _d3dDevice.ImmediateContext;
         
+        int encodedFramesInCurrentSecond = 0;
+        int currentRealtimeFps = 0;
+        long lastFpsTick = System.Diagnostics.Stopwatch.GetTimestamp();
+        double timestampToSeconds = 1.0 / System.Diagnostics.Stopwatch.Frequency;
+        
         try
         {
             foreach (var capturedFrame in _frameQueue.GetConsumingEnumerable())
@@ -468,7 +481,11 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                             {
                                 try
                                 {
-                                    using var overlayBmp = new System.Drawing.Bitmap(layer.FilePath);
+                                    if (!_imageCache.TryGetValue(layer.FilePath, out var overlayBmp))
+                                    {
+                                        overlayBmp = new System.Drawing.Bitmap(layer.FilePath);
+                                        _imageCache[layer.FilePath] = overlayBmp;
+                                    }
                                     g.DrawImage(overlayBmp, layer.X, layer.Y, layer.Width, layer.Height);
                                 } catch { }
                             }
@@ -476,10 +493,44 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                             {
                                 try
                                 {
-                                    var fontColor = System.Drawing.ColorTranslator.FromHtml(layer.FontColor);
-                                    using var brush = new System.Drawing.SolidBrush(fontColor);
-                                    using var font = new System.Drawing.Font(layer.FontFamily, layer.FontSize);
+                                    if (!_brushCache.TryGetValue(layer.FontColor, out var brush))
+                                    {
+                                        var fontColor = System.Drawing.ColorTranslator.FromHtml(layer.FontColor);
+                                        brush = new System.Drawing.SolidBrush(fontColor);
+                                        _brushCache[layer.FontColor] = brush;
+                                    }
+                                    
+                                    var fontKey = $"{layer.FontFamily}_{layer.FontSize}";
+                                    if (!_fontCache.TryGetValue(fontKey, out var font))
+                                    {
+                                        font = new System.Drawing.Font(layer.FontFamily, layer.FontSize);
+                                        _fontCache[fontKey] = font;
+                                    }
+                                    
                                     g.DrawString(layer.TextContent, font, brush, layer.X, layer.Y);
+                                } catch { }
+                            }
+                            else if (layer.Type == LayerType.FpsCounter)
+                            {
+                                try
+                                {
+                                    var fontColor = !string.IsNullOrEmpty(layer.FontColor) ? layer.FontColor : "#00FF00";
+                                    if (!_brushCache.TryGetValue(fontColor, out var brush))
+                                    {
+                                        brush = new System.Drawing.SolidBrush(System.Drawing.ColorTranslator.FromHtml(fontColor));
+                                        _brushCache[fontColor] = brush;
+                                    }
+                                    
+                                    var fontFamily = !string.IsNullOrEmpty(layer.FontFamily) ? layer.FontFamily : "Arial";
+                                    var fontSize = layer.FontSize > 0 ? layer.FontSize : 24;
+                                    var fontKey = $"{fontFamily}_{fontSize}";
+                                    if (!_fontCache.TryGetValue(fontKey, out var font))
+                                    {
+                                        font = new System.Drawing.Font(fontFamily, fontSize, System.Drawing.FontStyle.Bold);
+                                        _fontCache[fontKey] = font;
+                                    }
+                                    
+                                    g.DrawString($"FPS: {currentRealtimeFps}", font, brush, layer.X, layer.Y);
                                 } catch { }
                             }
                         }
@@ -524,6 +575,16 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                         ffmpeg.av_packet_unref(pkt);
                     }
                     ffmpeg.av_packet_free(&pkt);
+
+                    encodedFramesInCurrentSecond++;
+                    long now = System.Diagnostics.Stopwatch.GetTimestamp();
+                    if ((now - lastFpsTick) * timestampToSeconds >= 1.0)
+                    {
+                        currentRealtimeFps = encodedFramesInCurrentSecond;
+                        encodedFramesInCurrentSecond = 0;
+                        lastFpsTick = now;
+                        FpsUpdated?.Invoke(this, currentRealtimeFps);
+                    }
                 }
                 finally
                 {
@@ -658,6 +719,8 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         _session?.Dispose();
         _framePool?.Dispose();
         
+        ClearCaches();
+        
         _d3dDevice?.Dispose();
         _stagingTexture?.Dispose();
         if (_swsCtx != null)
@@ -675,5 +738,14 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             }
             _filterGraph = null;
         }
+    }
+    private void ClearCaches()
+    {
+        foreach (var bmp in _imageCache.Values) bmp.Dispose();
+        _imageCache.Clear();
+        foreach (var font in _fontCache.Values) font.Dispose();
+        _fontCache.Clear();
+        foreach (var brush in _brushCache.Values) brush.Dispose();
+        _brushCache.Clear();
     }
 }

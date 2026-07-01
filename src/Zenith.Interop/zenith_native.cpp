@@ -1,6 +1,6 @@
 #include <windows.h>
 #include <dxgi.h>
-#include <mmdeviceapi.h>
+#include <mmdeviceapi.h> // Left for now, in case other things need COM
 #include <functiondiscoverykeys_devpkey.h>
 #include <mfapi.h>
 #include <mfidl.h>
@@ -150,87 +150,7 @@ extern "C" {
         // Initialize COM for Audio/Webcam if not already initialized
         HRESULT hrCom = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
-        // 3. Enumerate WASAPI Audio Devices
-        IMMDeviceEnumerator* audioEnumerator = nullptr;
-        if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&audioEnumerator))) {
-            // Capture devices (Microphones)
-            IMMDeviceCollection* captureCollection = nullptr;
-            if (SUCCEEDED(audioEnumerator->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE, &captureCollection))) {
-                UINT count = 0;
-                captureCollection->GetCount(&count);
-                for (UINT i = 0; i < count; i++) {
-                    IMMDevice* device = nullptr;
-                    if (SUCCEEDED(captureCollection->Item(i, &device))) {
-                        LPWSTR idStr = nullptr;
-                        device->GetId(&idStr);
-                        
-                        IPropertyStore* props = nullptr;
-                        std::string friendlyName = "Unknown Microphone";
-                        if (SUCCEEDED(device->OpenPropertyStore(STGM_READ, &props))) {
-                            PROPVARIANT varName;
-                            PropVariantInit(&varName);
-                            if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName))) {
-                                friendlyName = Utf8Encode(varName.pwszVal);
-                                PropVariantClear(&varName);
-                            }
-                            props->Release();
-                        }
-                        
-                        sources.push_back({
-                            Utf8Encode(idStr),
-                            friendlyName,
-                            "",
-                            "AudioInput",
-                            0, 0
-                        });
-                        
-                        CoTaskMemFree(idStr);
-                        device->Release();
-                    }
-                }
-                captureCollection->Release();
-            }
-
-            // Render devices (System Audio / Playback loopback)
-            IMMDeviceCollection* renderCollection = nullptr;
-            if (SUCCEEDED(audioEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &renderCollection))) {
-                UINT count = 0;
-                renderCollection->GetCount(&count);
-                for (UINT i = 0; i < count; i++) {
-                    IMMDevice* device = nullptr;
-                    if (SUCCEEDED(renderCollection->Item(i, &device))) {
-                        LPWSTR idStr = nullptr;
-                        device->GetId(&idStr);
-                        
-                        IPropertyStore* props = nullptr;
-                        std::string friendlyName = "Unknown Output";
-                        if (SUCCEEDED(device->OpenPropertyStore(STGM_READ, &props))) {
-                            PROPVARIANT varName;
-                            PropVariantInit(&varName);
-                            if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName))) {
-                                friendlyName = Utf8Encode(varName.pwszVal);
-                                PropVariantClear(&varName);
-                            }
-                            props->Release();
-                        }
-                        
-                        sources.push_back({
-                            Utf8Encode(idStr),
-                            "System Audio: " + friendlyName,
-                            "",
-                            "AudioOutput",
-                            0, 0
-                        });
-                        
-                        CoTaskMemFree(idStr);
-                        device->Release();
-                    }
-                }
-                renderCollection->Release();
-            }
-            audioEnumerator->Release();
-        }
-
+        // WASAPI Audio enumeration has been moved to C# using NAudio.
         // 4. Enumerate Webcams (Media Foundation)
         if (SUCCEEDED(MFStartup(MF_VERSION))) {
             IMFAttributes* attributes = nullptr;

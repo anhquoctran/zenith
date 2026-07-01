@@ -4,7 +4,7 @@
         xmlns:core="using:Zenith.Core"
         xmlns:local="using:Zenith.UI"
         x:Class="Zenith.UI.MainWindow"
-        Title="Zenith"
+        Title="{DynamicResource Auto_Zenith}"
         Icon="/Assets/logo.png"
         Width="1280" 
         Height="720"
@@ -42,21 +42,37 @@
         <!-- Top Menu Bar -->
         <Border Grid.Row="1" Height="30" Background="#1A1A1A" BorderBrush="#222222" BorderThickness="0,0,0,1">
             <Menu Background="Transparent" FontSize="12"  Foreground="#ECECEC" VerticalAlignment="Center" Margin="10,0,0,0">
-                <MenuItem Header="_File">
-                    <MenuItem Header="Settings" Click="Menu_Settings_Click"/>
+                <MenuItem Header="{DynamicResource Menu_File}">
+                    <MenuItem Header="{DynamicResource Menu_Settings}" Click="Menu_Settings_Click"/>
                     <Separator/>
-                    <MenuItem Header="Show Recordings" Click="Menu_ShowRecordings_Click"/>
+                    <MenuItem Header="{DynamicResource Auto_ShowRecordings}" Click="Menu_ShowRecordings_Click"/>
                     <Separator/>
-                    <MenuItem Header="Exit" Click="Menu_Exit_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_Exit}" Click="Menu_Exit_Click"/>
                 </MenuItem>
-                <MenuItem Header="_Edit">
-                    <MenuItem Header="Copy Layer" InputGesture="Ctrl+C" Click="Menu_CopyLayer_Click"/>
-                    <MenuItem Header="Cut Layer" InputGesture="Ctrl+X" Click="Menu_CutLayer_Click"/>
-                    <MenuItem Header="Paste Layer" InputGesture="Ctrl+V" Click="Menu_PasteLayer_Click"/>
-                    <MenuItem Header="Delete Layer" InputGesture="Delete" Click="Menu_DeleteLayer_Click"/>
+                <MenuItem Header="{DynamicResource Menu_Edit}">
+                    <MenuItem Header="{DynamicResource Menu_CopyLayer}" InputGesture="Ctrl+C" Click="Menu_CopyLayer_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_CutLayer}" InputGesture="Ctrl+X" Click="Menu_CutLayer_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_PasteLayer}" InputGesture="Ctrl+V" Click="Menu_PasteLayer_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_DeleteLayer}" InputGesture="Delete" Click="Menu_DeleteLayer_Click"/>
                 </MenuItem>
-                <MenuItem Header="_Help">
-                    <MenuItem Header="About Zenith" Click="Menu_About_Click"/>
+                <MenuItem Header="{DynamicResource Menu_Layers}">
+                    <MenuItem Header="{DynamicResource Menu_AddVideoSource}">
+                        <MenuItem Header="{DynamicResource Type_Screen}" Click="Menu_AddScreen_Click"/>
+                        <MenuItem Header="{DynamicResource Type_Image}" Click="Menu_AddImage_Click"/>
+                        <MenuItem Header="{DynamicResource Type_VideoFile}" Click="Menu_AddVideoFile_Click"/>
+                        <MenuItem Header="{DynamicResource Type_Text}" Click="Menu_AddText_Click"/>
+                        <MenuItem Header="{DynamicResource Type_Camera}" Click="Menu_AddCamera_Click"/>
+                        <MenuItem Header="{DynamicResource Type_FpsCounter}" Click="Menu_AddFps_Click"/>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource Menu_RemoveVideoSource}" Click="RemoveVideoLayerButton_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_MoveSourceUp}" Click="MoveUpVideoLayerButton_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_MoveSourceDown}" Click="MoveDownVideoLayerButton_Click"/>
+                    <Separator/>
+                    <MenuItem Header="{DynamicResource Menu_AddAudioSource}" x:Name="MenuAddAudioSource"/>
+                    <MenuItem Header="{DynamicResource Menu_RemoveAudioSource}" Click="RemoveAudioLayerButton_Click"/>
+                </MenuItem>
+                <MenuItem Header="{DynamicResource Menu_Help}">
+                    <MenuItem Header="{DynamicResource Menu_About}" Click="Menu_About_Click"/>
                 </MenuItem>
             </Menu>
         </Border>
@@ -68,11 +84,11 @@
             <Border Grid.Row="0" Grid.Column="0" Background="#252526" BorderBrush="#333333" BorderThickness="1" Margin="0" Padding="5">
                 <Grid RowDefinitions="Auto,*">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
-                        <TextBlock Grid.Column="0" Text="Recording History" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" VerticalAlignment="Center"/>
-                        <Button x:Name="BtnClearHistory" Click="BtnClearHistory_Click" Grid.Column="1" ToolTip.Tip="Clear History" Width="28" Height="28" CornerRadius="14" Margin="0,0,5,0" Padding="0">
+                        <TextBlock Grid.Column="0" Text="{DynamicResource Auto_RecordingHistory}" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnClearHistory" Click="BtnClearHistory_Click" Grid.Column="1" ToolTip.Tip="{DynamicResource Auto_ClearHistory}" Width="28" Height="28" CornerRadius="14" Margin="0,0,5,0" Padding="0">
                             <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf1f8;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
-                        <Button x:Name="BtnRefreshHistory" Click="BtnRefreshHistory_Click" Grid.Column="2" ToolTip.Tip="Refresh" Width="28" Height="28" CornerRadius="14" Padding="0">
+                        <Button x:Name="BtnRefreshHistory" Click="BtnRefreshHistory_Click" Grid.Column="2" ToolTip.Tip="{DynamicResource Auto_Refresh}" Width="28" Height="28" CornerRadius="14" Padding="0">
                             <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf021;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
                     </Grid>
@@ -98,7 +114,7 @@
 
                     <StackPanel x:Name="EmptyHistoryPlaceholder" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="5" IsVisible="False">
                         <TextBlock Text="📁" FontSize="32" HorizontalAlignment="Center" Foreground="#555555"/>
-                        <TextBlock Text="No recordings" FontSize="13" FontWeight="SemiBold" Foreground="#888888" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource Auto_Norecordings}" FontSize="13" FontWeight="SemiBold" Foreground="#888888" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -121,10 +137,10 @@
                     <Border Grid.Row="1" BorderThickness="1" Padding="15">
                         <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock x:Name="ElapsedTimeText" Text="00:00:00" Foreground="White" FontSize="13" FontWeight="Regular" HorizontalAlignment="Center" IsVisible="true"/>
-                            <Button x:Name="RecordButton" Click="RecordButton_Click" Background="Transparent" Foreground="White" Width="38" Height="38" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Record">
+                            <Button x:Name="RecordButton" Click="RecordButton_Click" Background="Transparent" Foreground="White" Width="38" Height="38" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="{DynamicResource Auto_Record}">
                                 <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf111;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Button>
-                            <Button x:Name="StopButton" Click="StopButton_Click" Background="Transparent" Foreground="White" Width="38" Height="38" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="Stop">
+                            <Button x:Name="StopButton" Click="StopButton_Click" Background="Transparent" Foreground="White" Width="38" Height="38" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="{DynamicResource Auto_Stop}">
                                 <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf04d;" FontSize="22" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Button>
                         </StackPanel>
@@ -135,7 +151,7 @@
             <!-- Dock 1: Sources (Video Layers) -->
             <Border Grid.Row="1" Grid.Column="0" Background="#252526" BorderBrush="#333333" BorderThickness="1" Margin="0" Padding="5">
                 <Grid RowDefinitions="Auto,*,Auto">
-                    <TextBlock Grid.Row="0" Text="Sources" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" Margin="0,0,0,5"/>
+                    <TextBlock Grid.Row="0" Text="{DynamicResource Lbl_Sources}" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" Margin="0,0,0,5"/>
                     
                     <ListBox x:Name="VideoLayersListBox" Grid.Row="1" Background="#1E1E1E" BorderThickness="1" BorderBrush="#333333" CornerRadius="0" Padding="0">
                         <ListBox.Styles>
@@ -147,14 +163,14 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="core:VideoLayer">
                                 <Grid ColumnDefinitions="Auto, Auto, *, Auto" Margin="2">
-                                    <Button Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="0" Margin="5,0,5,0" VerticalAlignment="Center" Click="ToggleVisibilityButton_Click" ToolTip.Tip="Toggle Visibility">
+                                    <Button Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="0" Margin="5,0,5,0" VerticalAlignment="Center" Click="ToggleVisibilityButton_Click" ToolTip.Tip="{DynamicResource Auto_ToggleVisibility}">
                                         <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf06e;" Foreground="#AAAAAA" FontSize="10"/>
                                     </Button>
-                                    <Button Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,10,0" VerticalAlignment="Center" Click="EditVideoLayerButton_Click" ToolTip.Tip="Properties">
+                                    <Button Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,10,0" VerticalAlignment="Center" Click="EditVideoLayerButton_Click" ToolTip.Tip="{DynamicResource Auto_Properties}">
                                         <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf044;" Foreground="#AAAAAA" FontSize="10"/>
                                     </Button>
                                     <TextBlock Grid.Column="2" Text="{Binding Name}" VerticalAlignment="Center" Foreground="#ECECEC" FontSize="12"/>
-                                    <Button Grid.Column="3" Background="Transparent" BorderThickness="0" Padding="0" Margin="10,0,5,0" VerticalAlignment="Center" Click="ToggleLockButton_Click" ToolTip.Tip="Toggle Lock">
+                                    <Button Grid.Column="3" Background="Transparent" BorderThickness="0" Padding="0" Margin="10,0,5,0" VerticalAlignment="Center" Click="ToggleLockButton_Click" ToolTip.Tip="{DynamicResource Auto_ToggleLock}">
                                         <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf09c;" Foreground="#555555" FontSize="10"/>
                                     </Button>
                                 </Grid>
@@ -164,20 +180,20 @@
 
                     <Border Grid.Row="2" Background="#2B2B2B" BorderThickness="1,0,1,1" BorderBrush="#333333" Height="26" Margin="0">
                         <Grid ColumnDefinitions="Auto, Auto, *, Auto, Auto">
-                            <Button Grid.Column="0" Content="+" x:Name="AddVideoLayerButton" Click="AddVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Add Source"/>
-                            <Button Grid.Column="1" Content="-" x:Name="RemoveVideoLayerButton" Click="RemoveVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Remove Source"/>
+                            <Button Grid.Column="0" Content="+" x:Name="AddVideoLayerButton" Click="AddVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="{DynamicResource Auto_AddSource}"/>
+                            <Button Grid.Column="1" Content="-" x:Name="RemoveVideoLayerButton" Click="RemoveVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="{DynamicResource Auto_RemoveSource}"/>
                             
                             <ComboBox Grid.Column="2" x:Name="AddVideoLayerTypeComboBox" SelectedIndex="0" Height="20" FontSize="10" VerticalAlignment="Center" Margin="5,0" Padding="5,0" MinHeight="20">
-                                <ComboBoxItem Content="Screen" />
-                                <ComboBoxItem Content="Image" />
-                                <ComboBoxItem Content="Video File" />
-                                <ComboBoxItem Content="Text" />
-                                <ComboBoxItem Content="Camera" />
-                                <ComboBoxItem Content="FPS Counter" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Screen}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Image}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_VideoFile}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Text}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Camera}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_FPSCounter}" />
                             </ComboBox>
 
-                            <Button Grid.Column="3" Content="^" x:Name="MoveUpVideoLayerButton" Click="MoveUpVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Move Up"/>
-                            <Button Grid.Column="4" Content="v" x:Name="MoveDownVideoLayerButton" Click="MoveDownVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Move Down"/>
+                            <Button Grid.Column="3" Content="^" x:Name="MoveUpVideoLayerButton" Click="MoveUpVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="{DynamicResource Auto_MoveUp}"/>
+                            <Button Grid.Column="4" Content="{DynamicResource Auto_v}" x:Name="MoveDownVideoLayerButton" Click="MoveDownVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="{DynamicResource Auto_MoveDown}"/>
                         </Grid>
                     </Border>
                 </Grid>
@@ -186,91 +202,64 @@
             <!-- Dock 2: Mixer & Output -->
             <Border Grid.Row="1" Grid.Column="1" Background="#252526" BorderBrush="#333333" BorderThickness="1" Margin="0" Padding="5">
                 <Grid RowDefinitions="Auto,*,Auto">
-                    <TextBlock Grid.Row="0" Text="Audio Mixer" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" Margin="0,0,0,5"/>
+                    <TextBlock Grid.Row="0" Text="{DynamicResource Lbl_AudioMixer}" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" Margin="0,0,0,5"/>
                     
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                         <ListBox x:Name="AudioLayersListBox" Background="#1E1E1E" BorderThickness="1" BorderBrush="#333333" CornerRadius="0" Padding="0">
                             <ListBox.Styles>
                                 <Style Selector="ListBoxItem">
                                     <Setter Property="Padding" Value="0"/>
-                                    <Setter Property="Margin" Value="2,2,0,2"/>
-                                    <Setter Property="VerticalAlignment" Value="Top"/>
+                                    <Setter Property="Margin" Value="0"/>
                                 </Style>
                             </ListBox.Styles>
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="0"/>
+                                    <StackPanel Orientation="Vertical" Spacing="0"/>
                                 </ItemsPanelTemplate>
                             </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="core:AudioLayer">
-                                    <Border BorderThickness="0,0,1,0" BorderBrush="#333333" Width="95" Background="Transparent">
-                                        <Grid RowDefinitions="Auto, Auto, Auto, *, Auto">
+                                    <Border BorderThickness="0,0,0,1" BorderBrush="#333333" Background="Transparent" Padding="10,8">
+                                        <Grid RowDefinitions="Auto, Auto, Auto">
                                             
-                                            <!-- Row 0: Active Bar -->
-                                            <Border Grid.Row="0" Background="#112C66" Padding="0,3">
-                                                <TextBlock Text="Active" Foreground="#5B8EEA" FontSize="10" TextAlignment="Center" FontWeight="SemiBold"/>
-                                            </Border>
-                                            
-                                            <!-- Row 1: Name and Dropdown -->
-                                            <Grid Grid.Row="1" ColumnDefinitions="*, Auto" Margin="5,5,5,2">
-                                                <TextBlock Grid.Column="0" Text="{Binding Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis" FontSize="11" Foreground="#ECECEC" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="1" FontFamily="{StaticResource FontAwesome}" Text="&#xf0d7;" Foreground="#ECECEC" FontSize="10" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                                            </Grid>
-                                            
-                                            <!-- Row 2: dB Value -->
-                                            <TextBlock Grid.Row="2" Text="{Binding Volume, StringFormat=\{0:0.0\} dB}" FontSize="11" Foreground="#888888" Margin="5,0,5,10"/>
-                                            
-                                            <!-- Row 3: Sliders and Meters -->
-                                            <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, Auto" HorizontalAlignment="Center" Margin="0,0,0,10">
-                                                <!-- Slider -->
-                                                <Slider Grid.Column="0" Orientation="Vertical" Value="{Binding Volume}" Minimum="0" Maximum="1" Height="140" HorizontalAlignment="Left" Margin="0,0,5,0" />
-                                                
-                                                <!-- Stereo Meters -->
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
-                                                    <ProgressBar Orientation="Vertical" Minimum="0" Maximum="1" Value="{Binding CurrentPeak}" Width="6" CornerRadius="0" BorderThickness="0" Background="#111111">
-                                                        <ProgressBar.Foreground>
-                                                            <LinearGradientBrush StartPoint="0%,100%" EndPoint="0%,0%">
-                                                                <GradientStop Color="#28A745" Offset="0.0" />
-                                                                <GradientStop Color="#28A745" Offset="0.6" />
-                                                                <GradientStop Color="#FFC107" Offset="0.75" />
-                                                                <GradientStop Color="#DC3545" Offset="0.9" />
-                                                            </LinearGradientBrush>
-                                                        </ProgressBar.Foreground>
-                                                    </ProgressBar>
-                                                    <ProgressBar Orientation="Vertical" Minimum="0" Maximum="1" Value="{Binding CurrentPeak}" Width="6" CornerRadius="0" BorderThickness="0" Background="#111111">
-                                                        <ProgressBar.Foreground>
-                                                            <LinearGradientBrush StartPoint="0%,100%" EndPoint="0%,0%">
-                                                                <GradientStop Color="#28A745" Offset="0.0" />
-                                                                <GradientStop Color="#28A745" Offset="0.6" />
-                                                                <GradientStop Color="#FFC107" Offset="0.75" />
-                                                                <GradientStop Color="#DC3545" Offset="0.9" />
-                                                            </LinearGradientBrush>
-                                                        </ProgressBar.Foreground>
-                                                    </ProgressBar>
+                                            <!-- Row 0: Name and Options -->
+                                            <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,8">
+                                                <TextBlock Grid.Column="0" FontFamily="{StaticResource FontAwesome}" Text="&#xf028;" Foreground="#ECECEC" FontSize="14" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis" FontSize="12" FontWeight="SemiBold" Foreground="#ECECEC" VerticalAlignment="Center"/>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{Binding Volume, StringFormat=\{0:0.0\} dB}" FontSize="11" Foreground="#888888" VerticalAlignment="Center"/>
+                                                    <Button Background="Transparent" Padding="0" BorderThickness="0" Width="16" Height="16" VerticalAlignment="Center">
+                                                        <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf013;" Foreground="#ECECEC" FontSize="12"/>
+                                                    </Button>
                                                 </StackPanel>
-                                                
-                                                <!-- Tick Marks -->
-                                                <Grid Grid.Column="2" RowDefinitions="*,*,*,*,*,*,*,*,*,*,*" Margin="4,0,0,0">
-                                                    <TextBlock Grid.Row="0" Text="- 0" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="1" Text="- 6" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="2" Text="- 12" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="3" Text="- 18" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="4" Text="- 24" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="5" Text="- 30" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="6" Text="- 36" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="7" Text="- 42" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="8" Text="- 48" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="9" Text="- 54" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="10" Text="- 60" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
-                                                </Grid>
                                             </Grid>
                                             
-                                            <!-- Row 4: Bottom Icons -->
-                                            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15" Margin="0,0,0,10">
-                                                <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf028;" Foreground="#ECECEC" FontSize="14" VerticalAlignment="Center"/>
-                                                <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf013;" Foreground="#ECECEC" FontSize="14" VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                            <!-- Row 1: Peak Meters -->
+                                            <Grid Grid.Row="1" Margin="0,0,0,5" RowDefinitions="Auto, Auto">
+                                                <ProgressBar Grid.Row="0" Orientation="Horizontal" Minimum="0" Maximum="1" Value="{Binding CurrentPeak}" Height="6" CornerRadius="0" BorderThickness="0" Background="#111111" Margin="0,0,0,2">
+                                                    <ProgressBar.Foreground>
+                                                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                                                            <GradientStop Color="#28A745" Offset="0.0" />
+                                                            <GradientStop Color="#28A745" Offset="0.6" />
+                                                            <GradientStop Color="#FFC107" Offset="0.75" />
+                                                            <GradientStop Color="#DC3545" Offset="0.9" />
+                                                        </LinearGradientBrush>
+                                                    </ProgressBar.Foreground>
+                                                </ProgressBar>
+                                                <ProgressBar Grid.Row="1" Orientation="Horizontal" Minimum="0" Maximum="1" Value="{Binding CurrentPeak}" Height="6" CornerRadius="0" BorderThickness="0" Background="#111111">
+                                                    <ProgressBar.Foreground>
+                                                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                                                            <GradientStop Color="#28A745" Offset="0.0" />
+                                                            <GradientStop Color="#28A745" Offset="0.6" />
+                                                            <GradientStop Color="#FFC107" Offset="0.75" />
+                                                            <GradientStop Color="#DC3545" Offset="0.9" />
+                                                        </LinearGradientBrush>
+                                                    </ProgressBar.Foreground>
+                                                </ProgressBar>
+                                            </Grid>
+                                            
+                                            <!-- Row 2: Volume Slider -->
+                                            <Slider Grid.Row="2" Orientation="Horizontal" Value="{Binding Volume}" Minimum="0" Maximum="1" Height="20" Margin="0,0,0,0" VerticalAlignment="Center"/>
                                             
                                         </Grid>
                                     </Border>
@@ -281,8 +270,8 @@
 
                     <Border Grid.Row="2" Background="#2B2B2B" BorderThickness="1,0,1,1" BorderBrush="#333333" Height="26" Margin="0">
                         <Grid ColumnDefinitions="Auto, Auto, *">
-                            <Button Grid.Column="0" Content="+" x:Name="AddAudioLayerButton" Click="AddAudioLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Add Audio Source"/>
-                            <Button Grid.Column="1" Content="-" x:Name="RemoveAudioLayerButton" Click="RemoveAudioLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Remove Audio Source"/>
+                            <Button Grid.Column="0" Content="+" x:Name="AddAudioLayerButton" Click="AddAudioLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="{DynamicResource Auto_AddAudioSource}"/>
+                            <Button Grid.Column="1" Content="-" x:Name="RemoveAudioLayerButton" Click="RemoveAudioLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="{DynamicResource Auto_RemoveAudioSource}"/>
                             
                             <ComboBox Grid.Column="2" x:Name="AddAudioLayerTypeComboBox" SelectedIndex="0" Height="20" FontSize="10" VerticalAlignment="Center" Margin="5,0" Padding="5,0" MinHeight="20" HorizontalAlignment="Right">
                                 <ComboBox.ItemTemplate>
@@ -314,13 +303,13 @@
         <Border Grid.Row="3" Background="#111111" Padding="15,4" BorderBrush="#222222" BorderThickness="0,1,0,0" Height="28">
             <Grid ColumnDefinitions="*,*">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" Spacing="15">
-                    <TextBlock x:Name="AppVersionText" Text="Zenith v1.0.0" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="FFmpegVersionText" Text="FFmpeg vX.X" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="AppVersionText" Text="{DynamicResource Auto_Zenithv100}" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="FFmpegVersionText" Text="{DynamicResource Auto_FFmpegvXX}" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="15">
-                    <TextBlock x:Name="CpuUsageText" Text="CPU: 0%" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="MemUsageText" Text="Mem: 0 MB" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="GpuUsageText" Text="GPU: N/A" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="CpuUsageText" Text="{DynamicResource Auto_CPU0}" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="MemUsageText" Text="{DynamicResource Auto_Mem0MB}" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="GpuUsageText" Text="{DynamicResource Auto_GPUNA}" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>

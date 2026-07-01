@@ -14,7 +14,6 @@ public partial class LayerOverlayWindow : Window
 {
     private readonly VideoLayer _layer;
     private WebcamCaptureEngine? _webcam;
-    private DispatcherTimer? _fpsTimer;
     private WriteableBitmap? _bitmap;
 
     public LayerOverlayWindow()
@@ -80,13 +79,18 @@ public partial class LayerOverlayWindow : Window
             }
             catch { FpsText.Foreground = Brushes.LimeGreen; }
 
-            _fpsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            _fpsTimer.Tick += (s, e) => 
+            FpsText.Text = "FPS: 0";
+        }
+    }
+    
+    public void UpdateRealtimeFps(int fps)
+    {
+        if (_layer.Type == LayerType.FpsCounter)
+        {
+            Dispatcher.UIThread.Post(() =>
             {
-                FpsText.Text = $"FPS: {new Random().Next(58, 61)}"; // Simulated realistic recording FPS
-            };
-            _fpsTimer.Start();
-            FpsText.Text = "FPS: 60";
+                FpsText.Text = $"FPS: {fps}";
+            });
         }
     }
 
@@ -122,12 +126,6 @@ public partial class LayerOverlayWindow : Window
             _webcam.FrameArrived -= OnWebcamFrame;
             _webcam.Dispose();
             _webcam = null;
-        }
-
-        if (_fpsTimer != null)
-        {
-            _fpsTimer.Stop();
-            _fpsTimer = null;
         }
     }
 }

@@ -7,14 +7,14 @@
 
     <UserControl.ContextMenu>
         <ContextMenu>
-            <MenuItem Header="Bring to Front" Click="BringToFront_Click"/>
-            <MenuItem Header="Send to Back" Click="SendToBack_Click"/>
+            <MenuItem Header="{DynamicResource Auto_BringtoFront}" Click="BringToFront_Click"/>
+            <MenuItem Header="{DynamicResource Auto_SendtoBack}" Click="SendToBack_Click"/>
             <Separator/>
-            <MenuItem Header="Rotate 90°" Click="Rotate90_Click"/>
-            <MenuItem Header="Flip Horizontal" Click="FlipHorizontal_Click"/>
-            <MenuItem Header="Flip Vertical" Click="FlipVertical_Click"/>
+            <MenuItem Header="{DynamicResource Auto_Rotate90}" Click="Rotate90_Click"/>
+            <MenuItem Header="{DynamicResource Auto_FlipHorizontal}" Click="FlipHorizontal_Click"/>
+            <MenuItem Header="{DynamicResource Auto_FlipVertical}" Click="FlipVertical_Click"/>
             <Separator/>
-            <MenuItem Header="Delete" Click="Delete_Click"/>
+            <MenuItem Header="{DynamicResource Auto_Delete}" Click="Delete_Click"/>
         </ContextMenu>
     </UserControl.ContextMenu>
 

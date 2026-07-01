@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using System.Collections.Generic;
@@ -65,7 +66,7 @@ public partial class LayerPropertiesWindow : Window
 
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select File",
+            Title = Application.Current?.TryGetResource("Auto_SelectFile", out var titleRes) == true ? titleRes?.ToString() : "Select File",
             AllowMultiple = false
         });
 

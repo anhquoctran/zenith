@@ -8,6 +8,7 @@ public class MockRecorderEngine : IRecorderEngine
     public event EventHandler<RecorderStatusEventArgs>? StatusChanged;
     public event EventHandler<RecorderErrorEventArgs>? ErrorOccurred;
     public event EventHandler<float>? WaveformDataAvailable;
+    public event EventHandler<int>? FpsUpdated;
 
     public RecorderState State { get; private set; } = RecorderState.Idle;
 

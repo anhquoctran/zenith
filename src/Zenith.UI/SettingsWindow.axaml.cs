@@ -43,11 +43,25 @@ public partial class SettingsWindow : Window
         if (hwAccelCheckBox != null)
             hwAccelCheckBox.IsChecked = UseHardwareAcceleration;
             
-        if (gpuComboBox != null && _devices != null)
+            if (gpuComboBox != null && _devices != null)
         {
             gpuComboBox.ItemsSource = _devices;
             var selected = _devices.FirstOrDefault(d => d.Id == initialGpuId) ?? _devices.FirstOrDefault();
             gpuComboBox.SelectedItem = selected;
+        }
+
+        var langComboBox = this.FindControl<ComboBox>("LanguageComboBox");
+        if (langComboBox != null)
+        {
+            var currentLang = Zenith.UI.Utils.LocalizationManager.CurrentConfig.Language;
+            foreach (ComboBoxItem item in langComboBox.Items)
+            {
+                if (item.Tag is string tag && tag == currentLang)
+                {
+                    langComboBox.SelectedItem = item;
+                    break;
+                }
+            }
         }
     }
 
@@ -60,7 +74,7 @@ public partial class SettingsWindow : Window
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Select Save Location",
+            Title = Application.Current?.TryGetResource("Auto_SelectSaveLocation", out var titleRes) == true ? titleRes?.ToString() : "Select Save Location",
             AllowMultiple = false
         });
         
@@ -95,5 +109,41 @@ public partial class SettingsWindow : Window
     private void CancelButton_Click(object? sender, RoutedEventArgs e)
     {
         Close(false); // Return false indicating Cancel
+    }
+
+    private void CategoryListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListBox categoryListBox) return;
+
+        try
+        {
+            var index = categoryListBox.SelectedIndex;
+            
+            var general = this.FindControl<StackPanel>("GeneralPanel");
+            var output = this.FindControl<StackPanel>("OutputPanel");
+            var video = this.FindControl<StackPanel>("VideoPanel");
+            var audio = this.FindControl<StackPanel>("AudioPanel");
+            var hotkeys = this.FindControl<StackPanel>("HotkeysPanel");
+            var advanced = this.FindControl<StackPanel>("AdvancedPanel");
+
+            if (general != null) general.IsVisible = index == 0;
+            if (output != null) output.IsVisible = index == 1;
+            if (video != null) video.IsVisible = index == 2;
+            if (audio != null) audio.IsVisible = index == 3;
+            if (hotkeys != null) hotkeys.IsVisible = index == 4;
+            if (advanced != null) advanced.IsVisible = index == 5;
+        }
+        catch (InvalidOperationException)
+        {
+            // Ignore during initialization when name scope is not ready yet
+        }
+    }
+
+    private void LanguageComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox cb && cb.SelectedItem is ComboBoxItem item && item.Tag is string langCode)
+        {
+            Zenith.UI.Utils.LocalizationManager.ChangeLanguage(langCode);
+        }
     }
 }

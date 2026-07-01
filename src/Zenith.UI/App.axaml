@@ -8,18 +8,23 @@
     </Application.Styles>
 
     <Application.Resources>
-        <FontFamily x:Key="FontAwesome">avares://Zenith.UI/Assets/Fonts/fa-solid-900.ttf#Font Awesome 5 Free Solid</FontFamily>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Zenith.UI/Assets/Langs/en-US.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <FontFamily x:Key="FontAwesome">avares://Zenith.UI/Assets/Fonts/fa-solid-900.ttf#Font Awesome 5 Free Solid</FontFamily>
+        </ResourceDictionary>
     </Application.Resources>
 
     <TrayIcon.Icons>
         <TrayIcons>
-            <TrayIcon ToolTipText="Zenith Screen Recorder" Icon="/Assets/logo.png">
+            <TrayIcon ToolTipText="{DynamicResource Auto_ZenithScreenRecorder}" Icon="/Assets/logo.png">
                 <TrayIcon.Menu>
                     <NativeMenu>
-                        <NativeMenuItem Header="Show Main Window" Click="NativeMenuItem_Show_Click" />
-                        <NativeMenuItem Header="Stop Recording" Click="NativeMenuItem_Stop_Click" />
+                        <NativeMenuItem Header="{DynamicResource Auto_ShowMainWindow}" Click="NativeMenuItem_Show_Click" />
+                        <NativeMenuItem Header="{DynamicResource Auto_StopRecording}" Click="NativeMenuItem_Stop_Click" />
                         <NativeMenuItemSeparator />
-                        <NativeMenuItem Header="Exit" Click="NativeMenuItem_Exit_Click" />
+                        <NativeMenuItem Header="{DynamicResource Auto_Exit}" Click="NativeMenuItem_Exit_Click" />
                     </NativeMenu>
                 </TrayIcon.Menu>
             </TrayIcon>

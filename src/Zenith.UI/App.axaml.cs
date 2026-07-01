@@ -10,6 +10,7 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        Zenith.UI.Utils.LocalizationManager.LoadSavedLanguage();
     }
 
     public override void OnFrameworkInitializationCompleted()

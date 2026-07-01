@@ -3,70 +3,306 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:core="using:Zenith.Core"
-        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="Zenith.UI.SettingsWindow"
-        Title="Settings"
-        Width="600" Height="450"
+        Title="{DynamicResource Title_Settings}"
+        Width="750" Height="550"
         WindowStartupLocation="CenterOwner"
         CanMaximize="False"
         CanMinimize="False"
         CanResize="False"
         Background="#1E1E1E" Foreground="#ECECEC">
 
+    <Window.Styles>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="TextBlock.sectionHeader">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Foreground" Value="#ECECEC"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+        <Style Selector="StackPanel.settingGroup">
+            <Setter Property="Margin" Value="0,0,0,20"/>
+        </Style>
+    </Window.Styles>
+
     <Grid RowDefinitions="*,Auto">
-        <!-- Settings Tabs -->
-        <TabControl Grid.Row="0" Margin="10">
-            <!-- Output Settings -->
-            <TabItem Header="Output">
-                <StackPanel Margin="10" Spacing="15">
-                    <TextBlock Text="Recording Output" FontWeight="Bold" FontSize="14" Foreground="#ECECEC"/>
+        <!-- Settings Split Layout -->
+        <Grid Grid.Row="0" ColumnDefinitions="200,*">
+            
+            <!-- Sidebar -->
+            <Border Grid.Column="0" Background="#252526" BorderBrush="#333333" BorderThickness="0,0,1,0">
+                <ListBox x:Name="CategoryListBox" Background="Transparent" BorderThickness="0" Margin="10" SelectedIndex="0" SelectionChanged="CategoryListBox_SelectionChanged">
+                    <ListBoxItem Content="{DynamicResource Cat_General}" />
+                    <ListBoxItem Content="{DynamicResource Cat_Output}" />
+                    <ListBoxItem Content="{DynamicResource Cat_Video}" />
+                    <ListBoxItem Content="{DynamicResource Cat_Audio}" />
+                    <ListBoxItem Content="{DynamicResource Cat_Hotkeys}" />
+                    <ListBoxItem Content="{DynamicResource Cat_Advanced}" />
+                </ListBox>
+            </Border>
+
+            <!-- Main Content Area -->
+            <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <Grid x:Name="ContentGrid" Margin="30">
                     
-                    <StackPanel Spacing="5">
-                        <TextBlock Text="Save Location" FontWeight="SemiBold" FontSize="12" Foreground="#AAAAAA"/>
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBox x:Name="SaveLocationTextBox" Grid.Column="0" IsReadOnly="True" Margin="0,0,5,0" VerticalAlignment="Center" Height="28" FontSize="11" Padding="5,4"/>
-                            <Button x:Name="SelectFolderButton" Grid.Column="1" Content="Browse..." Click="SelectFolder_Click" Classes="accent" VerticalAlignment="Center" Height="28" Padding="10,0" HorizontalContentAlignment="Center"/>
-                        </Grid>
+                    <!-- General Settings -->
+                    <StackPanel x:Name="GeneralPanel" IsVisible="True">
+                        <TextBlock Text="{DynamicResource Auto_GeneralSettings}" Classes="sectionHeader"/>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Lbl_Language}" Classes="fieldLabel"/>
+                            <ComboBox x:Name="LanguageComboBox" HorizontalAlignment="Stretch" SelectionChanged="LanguageComboBox_SelectionChanged">
+                                <ComboBoxItem Content="{DynamicResource Auto_English}" Tag="en-US"/>
+                                <ComboBoxItem Content="{DynamicResource Auto_ChineseSimplified}" Tag="zh-CN"/>
+                                <ComboBoxItem Content="{DynamicResource Auto_ChineseTraditional}" Tag="zh-TW"/>
+                                <ComboBoxItem Content="{DynamicResource Auto_EspaolSpanish}" Tag="es-ES"/>
+                                <ComboBoxItem Content="{DynamicResource Auto_Japanese}" Tag="ja-JP"/>
+                                <ComboBoxItem Content="{DynamicResource Auto_DeutschGerman}" Tag="de-DE"/>
+                                <ComboBoxItem Content="{DynamicResource Auto_TingVitVietnamese}" Tag="vi-VN"/>
+                            </ComboBox>
+                        </StackPanel>
+
+
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_SystemTray}" Classes="fieldLabel"/>
+                            <CheckBox Content="{DynamicResource Auto_Minimizetosystemtray}" Foreground="#ECECEC"/>
+                            <CheckBox Content="{DynamicResource Auto_Alwaysminimizetosyst}" Foreground="#ECECEC"/>
+                        </StackPanel>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_Application}" Classes="fieldLabel"/>
+                            <CheckBox Content="{DynamicResource Auto_Automaticallycheckfo}" Foreground="#ECECEC"/>
+                            <CheckBox Content="{DynamicResource Auto_Showconfirmationdial}" Foreground="#ECECEC"/>
+                        </StackPanel>
                     </StackPanel>
 
-                    <StackPanel Spacing="5" Margin="0,10,0,0">
-                        <TextBlock Text="Hardware Encoder" FontWeight="SemiBold" FontSize="12" Foreground="#AAAAAA"/>
-                        <ComboBox x:Name="GpuComboBox" HorizontalAlignment="Stretch" SelectedIndex="0">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="core:GPUDevice">
-                                    <TextBlock Text="{Binding Name}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                    <!-- Output Settings -->
+                    <StackPanel x:Name="OutputPanel" IsVisible="False">
+                        <TextBlock Text="{DynamicResource Auto_OutputSettings}" Classes="sectionHeader"/>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_OutputMode}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_Simple}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Advanced}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Lbl_SaveLocation}" Classes="fieldLabel"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox x:Name="SaveLocationTextBox" Grid.Column="0" IsReadOnly="True" Margin="0,0,5,0" VerticalAlignment="Center" Height="28" FontSize="12" Padding="5,4"/>
+                                <Button x:Name="SelectFolderButton" Grid.Column="1" Content="{DynamicResource Btn_Browse}" Click="SelectFolder_Click" Classes="accent" VerticalAlignment="Center" Height="28" Padding="10,0" HorizontalContentAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_RecordingFormat}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_mkvRecommended}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_mp4}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_mov}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Lbl_GpuSelect}" Classes="fieldLabel"/>
+                            <ComboBox x:Name="GpuComboBox" HorizontalAlignment="Stretch" SelectedIndex="0">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="core:GPUDevice">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <CheckBox x:Name="HardwareAccelerationCheckBox" Content="{DynamicResource Lbl_HwAccel}" IsChecked="True" Foreground="#ECECEC" Margin="0,5,0,0"/>
+                        </StackPanel>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_AudioEncoder}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_AAC}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Opus}" />
+                            </ComboBox>
+                        </StackPanel>
                     </StackPanel>
 
-                    <CheckBox x:Name="HardwareAccelerationCheckBox" Content="Use Hardware Acceleration" IsChecked="True" Foreground="#AAAAAA" FontSize="12" Margin="0,5,0,0"/>
+                    <!-- Video Settings -->
+                    <StackPanel x:Name="VideoPanel" IsVisible="False">
+                        <TextBlock Text="{DynamicResource Auto_VideoSettings}" Classes="sectionHeader"/>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_BaseCanvasResolution}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_1920x1080}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_1280x720}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_2560x1440}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_3840x2160}" />
+                            </ComboBox>
+                        </StackPanel>
 
-                </StackPanel>
-            </TabItem>
-            
-            <!-- Video Settings -->
-            <TabItem Header="Video">
-                <StackPanel Margin="10" Spacing="15">
-                    <TextBlock Text="Video Settings" FontWeight="Bold" FontSize="14" Foreground="#ECECEC"/>
-                    <TextBlock Text="Currently using canvas resolution. More settings coming soon." Foreground="#AAAAAA" FontSize="12" TextWrapping="Wrap"/>
-                </StackPanel>
-            </TabItem>
-            
-            <!-- Audio Settings -->
-            <TabItem Header="Audio">
-                <StackPanel Margin="10" Spacing="15">
-                    <TextBlock Text="Audio Settings" FontWeight="Bold" FontSize="14" Foreground="#ECECEC"/>
-                    <TextBlock Text="More settings coming soon." Foreground="#AAAAAA" FontSize="12" TextWrapping="Wrap"/>
-                </StackPanel>
-            </TabItem>
-        </TabControl>
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_OutputScaledResoluti}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_1920x1080}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_1280x720}" />
+                            </ComboBox>
+                        </StackPanel>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_DownscaleFilter}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_BicubicSharpenedscal}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_LanczosSharpenedscal}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_BilinearFastestbutbl}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_CommonFPSValues}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="2" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="24" />
+                                <ComboBoxItem Content="30" />
+                                <ComboBoxItem Content="60" />
+                                <ComboBoxItem Content="120" />
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Audio Settings -->
+                    <StackPanel x:Name="AudioPanel" IsVisible="False">
+                        <TextBlock Text="{DynamicResource Auto_AudioSettings}" Classes="sectionHeader"/>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_SampleRate}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="1" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_441kHz}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_48kHz}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_Channels}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_Stereo}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Mono}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <TextBlock Text="{DynamicResource Auto_GlobalAudioDevices}" FontWeight="SemiBold" FontSize="14" Foreground="#ECECEC" Margin="0,10,0,10"/>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_DesktopAudio}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_Default}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Disabled}" />
+                            </ComboBox>
+                        </StackPanel>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_MicAuxiliaryAudio}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_Default}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Disabled}" />
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Hotkeys Settings -->
+                    <StackPanel x:Name="HotkeysPanel" IsVisible="False">
+                        <TextBlock Text="{DynamicResource Auto_Hotkeys}" Classes="sectionHeader"/>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_Recording}" Classes="fieldLabel"/>
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Auto_StartRecording}" VerticalAlignment="Center" Foreground="#ECECEC" Margin="0,5"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{DynamicResource Auto_None}" IsReadOnly="True" Margin="5"/>
+                                
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource Auto_StopRecording}" VerticalAlignment="Center" Foreground="#ECECEC" Margin="0,5"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{DynamicResource Auto_None}" IsReadOnly="True" Margin="5"/>
+                                
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Auto_PauseRecording}" VerticalAlignment="Center" Foreground="#ECECEC" Margin="0,5"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{DynamicResource Auto_None}" IsReadOnly="True" Margin="5"/>
+                                
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="{DynamicResource Auto_ResumeRecording}" VerticalAlignment="Center" Foreground="#ECECEC" Margin="0,5"/>
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{DynamicResource Auto_None}" IsReadOnly="True" Margin="5"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_Audio}" Classes="fieldLabel"/>
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,0,0,10">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Auto_MuteUnmuteDesktopAud}" VerticalAlignment="Center" Foreground="#ECECEC" Margin="0,5"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{DynamicResource Auto_None}" IsReadOnly="True" Margin="5"/>
+                                
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource Auto_MuteUnmuteMicrophone}" VerticalAlignment="Center" Foreground="#ECECEC" Margin="0,5"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{DynamicResource Auto_None}" IsReadOnly="True" Margin="5"/>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Advanced Settings -->
+                    <StackPanel x:Name="AdvancedPanel" IsVisible="False">
+                        <TextBlock Text="{DynamicResource Auto_AdvancedSettings}" Classes="sectionHeader"/>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_ProcessPriority}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_Normal}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_AboveNormal}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_High}" />
+                            </ComboBox>
+                        </StackPanel>
+                        
+                        <TextBlock Text="{DynamicResource Auto_Video}" FontWeight="SemiBold" FontSize="14" Foreground="#ECECEC" Margin="0,10,0,10"/>
+                        
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_ColorFormat}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_NV128bit420}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_I420}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_RGB}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_ColorSpace}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_sRGB}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Rec709}" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Classes="settingGroup">
+                            <TextBlock Text="{DynamicResource Auto_ColorRange}" Classes="fieldLabel"/>
+                            <ComboBox SelectedIndex="0" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="{DynamicResource Auto_Partial}" />
+                                <ComboBoxItem Content="{DynamicResource Auto_Full}" />
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+
+                </Grid>
+            </ScrollViewer>
+        </Grid>
 
         <!-- Action Buttons -->
         <Border Grid.Row="1" Background="#252525" BorderThickness="0,1,0,0" BorderBrush="#333333" Padding="15">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-                <Button Content="OK" Click="OkButton_Click" Width="80" HorizontalContentAlignment="Center" Background="#007ACC" Foreground="White" BorderThickness="0"/>
-                <Button Content="Cancel" Click="CancelButton_Click" Width="80" HorizontalContentAlignment="Center" Background="#333333" Foreground="White" BorderThickness="0"/>
+                <Button Content="{DynamicResource Btn_OK}" Click="OkButton_Click" Width="80" HorizontalContentAlignment="Center" Background="#007ACC" Foreground="White" BorderThickness="0"/>
+                <Button Content="{DynamicResource Btn_Cancel}" Click="CancelButton_Click" Width="80" HorizontalContentAlignment="Center" Background="#333333" Foreground="White" BorderThickness="0"/>
             </StackPanel>
         </Border>
     </Grid>

@@ -135,6 +135,14 @@ public partial class MainWindow : Window
             });
         };
         
+        _recorderEngine.FpsUpdated += (s, fps) =>
+        {
+            foreach (var overlay in _activeOverlays)
+            {
+                overlay.UpdateRealtimeFps(fps);
+            }
+        };
+        
         var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zenith", "records.db");
         Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
         _recordRepository = new RecordRepository(dbPath);
@@ -286,8 +294,8 @@ public partial class MainWindow : Window
 
         var audioDevices = new List<AudioSource>
         {
-            new AudioSource { Name = "System Audio (Default)", Id = "default_system" },
-            new AudioSource { Name = "Microphone (Default)", Id = "default_mic" }
+            new AudioSource { Name = Application.Current?.TryGetResource("Auto_SystemAudioDefault", out var sysAudio) == true ? sysAudio?.ToString() : "System Audio (Default)", Id = "default_system" },
+            new AudioSource { Name = Application.Current?.TryGetResource("Auto_MicrophoneDefault", out var micAudio) == true ? micAudio?.ToString() : "Microphone (Default)", Id = "default_mic" }
         };
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -309,6 +317,13 @@ public partial class MainWindow : Window
 
         AddAudioLayerTypeComboBox.ItemsSource = audioDevices;
         AddAudioLayerTypeComboBox.SelectedIndex = 0;
+        
+        foreach (var device in audioDevices)
+        {
+            var menuItem = new MenuItem { Header = device.Name, Tag = device };
+            menuItem.Click += AddAudioLayerFromMenu_Click;
+            MenuAddAudioSource.Items.Add(menuItem);
+        }
         
         // Add default screen layer if empty
         if (VideoLayers.Count == 0)
@@ -365,8 +380,8 @@ public partial class MainWindow : Window
     {
         if (AddVideoLayerTypeComboBox.SelectedItem is ComboBoxItem item && item.Content != null)
         {
-            var typeStr = item.Content.ToString();
-            var typeLayer = typeStr switch
+            var typeString = item.Content.ToString();
+            LayerType type = typeString switch
             {
                 "Screen" => LayerType.Screen,
                 "Image" => LayerType.Image,
@@ -379,8 +394,8 @@ public partial class MainWindow : Window
             
             var newLayer = new VideoLayer
             {
-                Name = $"New {typeStr}",
-                Type = typeLayer
+                Name = $"New {typeString}",
+                Type = type
             };
             
             // Give a default text for text layers
@@ -417,7 +432,7 @@ public partial class MainWindow : Window
                 newLayer.Y = 1080 / 2 - newLayer.Height / 2;
             }
             
-            VideoLayers.Add(newLayer);
+            AddVideoLayerSafely(newLayer);
         }
     }
 
@@ -432,7 +447,62 @@ public partial class MainWindow : Window
             else if (src.Id.StartsWith("sys|")) { type = AudioLayerType.SystemAudio; realId = src.Id.Substring(4); }
             else if (src.Id.StartsWith("mic|")) { type = AudioLayerType.Microphone; realId = src.Id.Substring(4); }
 
-            AudioLayers.Add(new AudioLayer
+            AddAudioLayerSafely(new AudioLayer
+            {
+                Name = src.Name,
+                Type = type,
+                SourceId = realId,
+                Volume = 1.0f
+            });
+        }
+    }
+
+    private void AddVideoLayerSafely(VideoLayer layer)
+    {
+        if (VideoLayers.Count >= 10)
+        {
+            // Optional: show a message box, but silent return is ok for now.
+            return;
+        }
+        VideoLayers.Add(layer);
+    }
+    
+    private void AddAudioLayerSafely(AudioLayer layer)
+    {
+        if (AudioLayers.Count >= 10)
+        {
+            return;
+        }
+        AudioLayers.Add(layer);
+    }
+
+    private void Menu_AddScreen_Click(object? sender, RoutedEventArgs e)
+    {
+        var screens = new List<VideoSource>(_deviceEnumerator.GetVideoSources());
+        if (screens.Count > 0)
+        {
+            AddVideoLayerSafely(new VideoLayer { Name = screens[0].Name, Type = LayerType.Screen, SourceId = screens[0].Id });
+        }
+    }
+
+    private void Menu_AddImage_Click(object? sender, RoutedEventArgs e) { AddVideoLayerSafely(new VideoLayer { Name = "Image Overlay", Type = LayerType.Image }); }
+    private void Menu_AddVideoFile_Click(object? sender, RoutedEventArgs e) { AddVideoLayerSafely(new VideoLayer { Name = "Video Overlay", Type = LayerType.VideoFile }); }
+    private void Menu_AddText_Click(object? sender, RoutedEventArgs e) { AddVideoLayerSafely(new VideoLayer { Name = "Text Overlay", Type = LayerType.Text }); }
+    private void Menu_AddCamera_Click(object? sender, RoutedEventArgs e) { AddVideoLayerSafely(new VideoLayer { Name = "Webcam", Type = LayerType.Camera }); }
+    private void Menu_AddFps_Click(object? sender, RoutedEventArgs e) { AddVideoLayerSafely(new VideoLayer { Name = "FPS Counter", Type = LayerType.FpsCounter }); }
+
+    private void AddAudioLayerFromMenu_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.Tag is AudioSource src)
+        {
+            AudioLayerType type = AudioLayerType.Microphone;
+            string realId = "";
+            if (src.Id == "default_system") { type = AudioLayerType.SystemAudio; }
+            else if (src.Id == "default_mic") { type = AudioLayerType.Microphone; }
+            else if (src.Id.StartsWith("sys|")) { type = AudioLayerType.SystemAudio; realId = src.Id.Substring(4); }
+            else if (src.Id.StartsWith("mic|")) { type = AudioLayerType.Microphone; realId = src.Id.Substring(4); }
+
+            AddAudioLayerSafely(new AudioLayer
             {
                 Name = src.Name,
                 Type = type,
