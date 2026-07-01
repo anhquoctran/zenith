@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 using Zenith.Core;
 using Zenith.Data;
 using Zenith.Interop;
+using System.Diagnostics;
+using Avalonia.VisualTree;
+using System.Linq;
 using Path = System.IO.Path;
 
 namespace Zenith.UI;
@@ -72,6 +75,10 @@ public partial class MainWindow : Window
     public System.Collections.ObjectModel.ObservableCollection<VideoLayer> VideoLayers { get; } = new();
     public System.Collections.ObjectModel.ObservableCollection<AudioLayer> AudioLayers { get; } = new();
 
+    private List<GPUDevice> _gpuDevices = new();
+    public string AppSaveLocation { get; set; } = "";
+    public bool AppUseHardwareAcceleration { get; set; } = true;
+    public string AppSelectedGpuId { get; set; } = "Auto";
     public MainWindow()
     {
         InitializeComponent();
@@ -146,7 +153,7 @@ public partial class MainWindow : Window
             }
             catch { }
 #endif
-            SaveLocationTextBox.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), Constants.OUTPUT_PREFIX_PATH);
+            AppSaveLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), Constants.OUTPUT_PREFIX_PATH);
             await _recordRepository.InitializeAsync();
             await LoadHistoryAsync();
             LoadDevices();
@@ -271,13 +278,37 @@ public partial class MainWindow : Window
     
     private void LoadDevices()
     {
-        var gpus = new List<GPUDevice>
+        _gpuDevices = new List<GPUDevice>
         {
             new() { Name = "Auto", Id = "Auto" }
         };
-        gpus.AddRange(_deviceEnumerator.GetGPUDevices());
-        GpuComboBox.ItemsSource = gpus;
-        GpuComboBox.SelectedIndex = 0;
+        _gpuDevices.AddRange(_deviceEnumerator.GetGPUDevices());
+
+        var audioDevices = new List<AudioSource>
+        {
+            new AudioSource { Name = "System Audio (Default)", Id = "default_system" },
+            new AudioSource { Name = "Microphone (Default)", Id = "default_mic" }
+        };
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            try
+            {
+                var enumerator = new NAudio.CoreAudioApi.MMDeviceEnumerator();
+                foreach (var endpoint in enumerator.EnumerateAudioEndPoints(NAudio.CoreAudioApi.DataFlow.Render, NAudio.CoreAudioApi.DeviceState.Active))
+                {
+                    audioDevices.Add(new AudioSource { Name = "[Output] " + endpoint.FriendlyName, Id = "sys|" + endpoint.ID });
+                }
+                foreach (var endpoint in enumerator.EnumerateAudioEndPoints(NAudio.CoreAudioApi.DataFlow.Capture, NAudio.CoreAudioApi.DeviceState.Active))
+                {
+                    audioDevices.Add(new AudioSource { Name = "[Input] " + endpoint.FriendlyName, Id = "mic|" + endpoint.ID });
+                }
+            }
+            catch { }
+        }
+
+        AddAudioLayerTypeComboBox.ItemsSource = audioDevices;
+        AddAudioLayerTypeComboBox.SelectedIndex = 0;
         
         // Add default screen layer if empty
         if (VideoLayers.Count == 0)
@@ -392,13 +423,20 @@ public partial class MainWindow : Window
 
     private void AddAudioLayerButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (AddAudioLayerTypeComboBox.SelectedItem is ComboBoxItem item && item.Content != null)
+        if (AddAudioLayerTypeComboBox.SelectedItem is AudioSource src)
         {
-            var typeStr = item.Content.ToString();
+            AudioLayerType type = AudioLayerType.Microphone;
+            string realId = "";
+            if (src.Id == "default_system") { type = AudioLayerType.SystemAudio; }
+            else if (src.Id == "default_mic") { type = AudioLayerType.Microphone; }
+            else if (src.Id.StartsWith("sys|")) { type = AudioLayerType.SystemAudio; realId = src.Id.Substring(4); }
+            else if (src.Id.StartsWith("mic|")) { type = AudioLayerType.Microphone; realId = src.Id.Substring(4); }
+
             AudioLayers.Add(new AudioLayer
             {
-                Name = $"New {typeStr}",
-                Type = typeStr == "Microphone" ? AudioLayerType.Microphone : AudioLayerType.SystemAudio,
+                Name = src.Name,
+                Type = type,
+                SourceId = realId,
                 Volume = 1.0f
             });
         }
@@ -457,6 +495,19 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ToggleLockButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.DataContext is VideoLayer layer)
+        {
+            layer.IsLocked = !layer.IsLocked;
+            if (btn.Content is TextBlock tb)
+            {
+                tb.Text = layer.IsLocked ? "\uf023" : "\uf09c"; // lock : unlock
+                tb.Foreground = new Avalonia.Media.SolidColorBrush(layer.IsLocked ? Avalonia.Media.Color.Parse("#AAAAAA") : Avalonia.Media.Color.Parse("#555555"));
+            }
+        }
+    }
+
     private void EditVideoLayerButton_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.DataContext is VideoLayer layer)
@@ -481,11 +532,7 @@ public partial class MainWindow : Window
             }
             catch { }
 #endif
-            HardwareAccelerationCheckBox.IsEnabled = false;
-            GpuComboBox.IsEnabled = false;
-            SelectFolderButton?.IsEnabled = false;
-
-            var dir = SaveLocationTextBox.Text;
+            var dir = AppSaveLocation;
             if (string.IsNullOrEmpty(dir)) dir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
             Directory.CreateDirectory(dir);
             var filename = Path.Combine(dir, $"Recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
@@ -494,8 +541,8 @@ public partial class MainWindow : Window
             {
                 OutputPath = filename,
                 Framerate = 60,
-                UseHardwareAcceleration = HardwareAccelerationCheckBox.IsChecked == true,
-                SelectedGpuId = (GpuComboBox.SelectedItem as GPUDevice)?.Id ?? "Auto"
+                UseHardwareAcceleration = AppUseHardwareAcceleration,
+                SelectedGpuId = AppSelectedGpuId
             };
             
             // Copy current layers into config
@@ -558,9 +605,6 @@ public partial class MainWindow : Window
         if (_recorderEngine == null || _recorderEngine.State == RecorderState.Idle) return;
 
         StopButton.IsEnabled = false;
-        HardwareAccelerationCheckBox.IsEnabled = true;
-        GpuComboBox.IsEnabled = true;
-        SelectFolderButton?.IsEnabled = true;
 
         _elapsedTimer.Stop();
         ElapsedTimeText.Text = "00:00:00";
@@ -652,53 +696,8 @@ public partial class MainWindow : Window
         this.Hide();
     }
 
-    private async void SelectFolder_Click(object? sender, RoutedEventArgs e)
-    {
-        var folders = await StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions
-        {
-            Title = "Select Save Location",
-            AllowMultiple = false
-        });
-        
-        if (folders != null && folders.Count > 0)
-        {
-            var saveFolder = Path.Combine(folders[0].Path.LocalPath, Constants.OUTPUT_PREFIX_PATH);
-            SaveLocationTextBox.Text = saveFolder;
-        }
-    }
-
     private void AudioSourceComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-    }
-
-    private void UpdateGpuWarning()
-    {
-        if (GpuComboBox == null || GpuWarningPanel == null) return;
-        
-        if (GpuComboBox.SelectedItem is GPUDevice selectedGpu)
-        {
-            var baseLayer = VideoLayers.Count > 0 ? VideoLayers[0] : null;
-            if (selectedGpu.Id != "Auto" && 
-                baseLayer != null && baseLayer.Type == LayerType.Screen &&
-                !string.IsNullOrEmpty(baseLayer.SourceId)) // We no longer easily track OwningGpuId on layers right now
-            {
-                // To keep it simple, hide the warning for now until we store OwningGpuId on VideoLayer
-                GpuWarningPanel.IsVisible = false;
-            }
-            else
-            {
-                GpuWarningPanel.IsVisible = false;
-            }
-        }
-        else
-        {
-            GpuWarningPanel.IsVisible = false;
-        }
-    }
-
-    private void GpuComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        UpdateGpuWarning();
     }
 
     private async void BtnRefreshHistory_Click(object? sender, RoutedEventArgs e)
@@ -724,6 +723,72 @@ public partial class MainWindow : Window
         await LoadHistoryAsync();
     }
 
+    private async void Menu_Settings_Click(object? sender, RoutedEventArgs e)
+    {
+        var settingsWindow = new SettingsWindow(AppSaveLocation, AppUseHardwareAcceleration, AppSelectedGpuId, _gpuDevices);
+        var result = await settingsWindow.ShowDialog<bool>(this);
+        if (result)
+        {
+            AppSaveLocation = settingsWindow.SaveLocation;
+            AppUseHardwareAcceleration = settingsWindow.UseHardwareAcceleration;
+            AppSelectedGpuId = settingsWindow.SelectedGpu?.Id ?? "Auto";
+        }
+    }
+
+    private void Menu_ShowRecordings_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(AppSaveLocation))
+        {
+            try { Process.Start(new ProcessStartInfo { FileName = AppSaveLocation, UseShellExecute = true }); } catch { }
+        }
+    }
+
+    private void Menu_Exit_Click(object? sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    private void Menu_CopyLayer_Click(object? sender, RoutedEventArgs e)
+    {
+        var editor = this.GetVisualDescendants().OfType<VisualLayerEditor>().FirstOrDefault();
+        editor?.CopySelectedLayer();
+    }
+
+    private void Menu_CutLayer_Click(object? sender, RoutedEventArgs e)
+    {
+        var editor = this.GetVisualDescendants().OfType<VisualLayerEditor>().FirstOrDefault();
+        editor?.CutSelectedLayer();
+    }
+
+    private void Menu_PasteLayer_Click(object? sender, RoutedEventArgs e)
+    {
+        var editor = this.GetVisualDescendants().OfType<VisualLayerEditor>().FirstOrDefault();
+        editor?.PasteLayer();
+    }
+
+    private void Menu_DeleteLayer_Click(object? sender, RoutedEventArgs e)
+    {
+        var editor = this.GetVisualDescendants().OfType<VisualLayerEditor>().FirstOrDefault();
+        editor?.DeleteSelectedLayer();
+    }
+
+    private async void Menu_About_Click(object? sender, RoutedEventArgs e)
+    {
+        var dialog = new Window
+        {
+            Title = "About Zenith",
+            Width = 300,
+            Height = 150,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false
+        };
+        var panel = new Avalonia.Controls.StackPanel { Margin = new Avalonia.Thickness(20) };
+        panel.Children.Add(new Avalonia.Controls.TextBlock { Text = "Zenith Screen Recorder", FontWeight = Avalonia.Media.FontWeight.Bold, FontSize = 16, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, Margin = new Avalonia.Thickness(0, 0, 0, 10) });
+        panel.Children.Add(new Avalonia.Controls.TextBlock { Text = "Version 1.0.0", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center });
+        panel.Children.Add(new Avalonia.Controls.TextBlock { Text = "Powered by FFmpeg & Avalonia UI", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, Margin = new Avalonia.Thickness(0, 10, 0, 0) });
+        dialog.Content = panel;
+        await dialog.ShowDialog(this);
+    }
 
 	protected override void OnClosed(EventArgs e)
     {

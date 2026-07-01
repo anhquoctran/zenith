@@ -153,6 +153,22 @@ public partial class VisualLayerEditor : UserControl
             for (var i = 0; i < 8; i++) EditorCanvas.Children.Add(_resizeHandles[i]);
         }
 
+        // Hide resize handles and change cursor if locked
+        if (_selectedLayer.IsLocked)
+        {
+            for (var i = 0; i < 8; i++) _resizeHandles[i].IsVisible = false;
+            _selectionBox!.Cursor = new Cursor(StandardCursorType.Arrow);
+            _selectionBox.Fill = new SolidColorBrush(Color.FromArgb(30, 204, 0, 0)); // Red tint for locked
+            _selectionBox.Stroke = new SolidColorBrush(Color.Parse("#CC0000"));
+        }
+        else
+        {
+            for (var i = 0; i < 8; i++) _resizeHandles[i].IsVisible = true;
+            _selectionBox!.Cursor = new Cursor(StandardCursorType.SizeAll);
+            _selectionBox.Fill = new SolidColorBrush(Color.FromArgb(30, 0, 122, 204));
+            _selectionBox.Stroke = new SolidColorBrush(Color.Parse("#007ACC"));
+        }
+
         var scaledX = _selectedLayer.X * ScaleX;
         var scaledY = _selectedLayer.Y * ScaleY;
         var scaledW = _selectedLayer.Width * ScaleX;
@@ -182,7 +198,7 @@ public partial class VisualLayerEditor : UserControl
 
     private void SelectionBox_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_selectedLayer == null) return;
+        if (_selectedLayer == null || _selectedLayer.IsLocked) return;
         _isDragging = true;
         _lastMousePosition = e.GetPosition(EditorCanvas);
         e.Handled = true;
@@ -208,7 +224,7 @@ public partial class VisualLayerEditor : UserControl
 
     private void Handle_PointerPressed(object? sender, PointerPressedEventArgs e, int handleIndex)
     {
-        if (_selectedLayer == null) return;
+        if (_selectedLayer == null || _selectedLayer.IsLocked) return;
         _isResizing = true;
         _resizeHandle = handleIndex.ToString();
         _lastMousePosition = e.GetPosition(EditorCanvas);
@@ -228,7 +244,7 @@ public partial class VisualLayerEditor : UserControl
         for (var i = VideoLayers.Count - 1; i >= 0; i--)
         {
             var layer = VideoLayers[i];
-            if (!layer.IsVisible) continue;
+            if (!layer.IsVisible || layer.IsLocked) continue;
             
             if (unscaledX >= layer.X && unscaledX <= layer.X + layer.Width &&
                 unscaledY >= layer.Y && unscaledY <= layer.Y + layer.Height)
@@ -312,6 +328,56 @@ public partial class VisualLayerEditor : UserControl
         _isResizing = false;
     }
 
+    public void DeleteSelectedLayer()
+    {
+        if (_selectedLayer != null && VideoLayers != null)
+        {
+            VideoLayers.Remove(_selectedLayer);
+            _selectedLayer = null;
+            UpdateAdorners();
+        }
+    }
+
+    public void CopySelectedLayer()
+    {
+        if (_selectedLayer != null)
+        {
+            _clipboardJson = JsonSerializer.Serialize(_selectedLayer);
+        }
+    }
+
+    public void CutSelectedLayer()
+    {
+        if (_selectedLayer != null && VideoLayers != null)
+        {
+            _clipboardJson = JsonSerializer.Serialize(_selectedLayer);
+            VideoLayers.Remove(_selectedLayer);
+            _selectedLayer = null;
+            UpdateAdorners();
+        }
+    }
+
+    public void PasteLayer()
+    {
+        if (!string.IsNullOrEmpty(_clipboardJson) && VideoLayers != null)
+        {
+            try
+            {
+                var newLayer = JsonSerializer.Deserialize<VideoLayer>(_clipboardJson);
+                if (newLayer != null)
+                {
+                    newLayer.Id = Guid.NewGuid().ToString();
+                    newLayer.Name = newLayer.Name + " (Copy)";
+                    newLayer.X += 20; // Offset slightly
+                    newLayer.Y += 20;
+                    newLayer.IsSelected = true;
+                    VideoLayers.Add(newLayer);
+                }
+            }
+            catch { }
+        }
+    }
+
     private void UserControl_KeyDown(object? sender, KeyEventArgs e)
     {
         if (VideoLayers == null) return;
@@ -320,53 +386,19 @@ public partial class VisualLayerEditor : UserControl
 
         if (e.Key == Key.Delete || e.Key == Key.Back)
         {
-            if (_selectedLayer != null)
-            {
-                VideoLayers.Remove(_selectedLayer);
-                _selectedLayer = null;
-                UpdateAdorners();
-            }
+            DeleteSelectedLayer();
         }
         else if (ctrl && e.Key == Key.C)
         {
-            if (_selectedLayer != null)
-            {
-                _clipboardJson = JsonSerializer.Serialize(_selectedLayer);
-            }
+            CopySelectedLayer();
         }
         else if (ctrl && e.Key == Key.X)
         {
-            if (_selectedLayer != null)
-            {
-                _clipboardJson = JsonSerializer.Serialize(_selectedLayer);
-                VideoLayers.Remove(_selectedLayer);
-                _selectedLayer = null;
-                UpdateAdorners();
-            }
+            CutSelectedLayer();
         }
         else if (ctrl && e.Key == Key.V)
         {
-            if (!string.IsNullOrEmpty(_clipboardJson))
-            {
-                try
-                {
-                    var newLayer = JsonSerializer.Deserialize<VideoLayer>(_clipboardJson);
-                    if (newLayer != null)
-                    {
-                        newLayer.Id = Guid.NewGuid().ToString();
-                        newLayer.Name = newLayer.Name + " (Copy)";
-                        newLayer.X += 20;
-                        newLayer.Y += 20;
-                        newLayer.IsSelected = true;
-                        
-                        // Deselect others
-                        foreach (var l in VideoLayers) l.IsSelected = false;
-                        
-                        VideoLayers.Add(newLayer);
-                    }
-                }
-                catch { }
-            }
+            PasteLayer();
         }
     }
 }

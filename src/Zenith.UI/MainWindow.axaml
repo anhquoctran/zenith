@@ -43,31 +43,20 @@
         <Border Grid.Row="1" Height="30" Background="#1A1A1A" BorderBrush="#222222" BorderThickness="0,0,0,1">
             <Menu Background="Transparent" FontSize="12"  Foreground="#ECECEC" VerticalAlignment="Center" Margin="10,0,0,0">
                 <MenuItem Header="_File">
-                    <MenuItem Header="Show Recordings"/>
-                    <MenuItem Header="Remux Recordings"/>
+                    <MenuItem Header="Settings" Click="Menu_Settings_Click"/>
                     <Separator/>
-                    <MenuItem Header="Settings"/>
+                    <MenuItem Header="Show Recordings" Click="Menu_ShowRecordings_Click"/>
                     <Separator/>
-                    <MenuItem Header="Exit"/>
+                    <MenuItem Header="Exit" Click="Menu_Exit_Click"/>
                 </MenuItem>
                 <MenuItem Header="_Edit">
-                    <MenuItem Header="Undo"/>
-                    <MenuItem Header="Redo"/>
-                </MenuItem>
-                <MenuItem Header="_View">
-                    <MenuItem Header="Docks"/>
-                </MenuItem>
-                <MenuItem Header="_Profile">
-                    <MenuItem Header="Default"/>
-                </MenuItem>
-                <MenuItem Header="_Scene Collection">
-                    <MenuItem Header="Default"/>
-                </MenuItem>
-                <MenuItem Header="_Tools">
-                    <MenuItem Header="Scripts"/>
+                    <MenuItem Header="Copy Layer" InputGesture="Ctrl+C" Click="Menu_CopyLayer_Click"/>
+                    <MenuItem Header="Cut Layer" InputGesture="Ctrl+X" Click="Menu_CutLayer_Click"/>
+                    <MenuItem Header="Paste Layer" InputGesture="Ctrl+V" Click="Menu_PasteLayer_Click"/>
+                    <MenuItem Header="Delete Layer" InputGesture="Delete" Click="Menu_DeleteLayer_Click"/>
                 </MenuItem>
                 <MenuItem Header="_Help">
-                    <MenuItem Header="About Zenith"/>
+                    <MenuItem Header="About Zenith" Click="Menu_About_Click"/>
                 </MenuItem>
             </Menu>
         </Border>
@@ -165,7 +154,9 @@
                                         <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf044;" Foreground="#AAAAAA" FontSize="10"/>
                                     </Button>
                                     <TextBlock Grid.Column="2" Text="{Binding Name}" VerticalAlignment="Center" Foreground="#ECECEC" FontSize="12"/>
-                                    <TextBlock Grid.Column="3" FontFamily="{StaticResource FontAwesome}" Text="&#xf023;" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="10,0,5,0" FontSize="10"/>
+                                    <Button Grid.Column="3" Background="Transparent" BorderThickness="0" Padding="0" Margin="10,0,5,0" VerticalAlignment="Center" Click="ToggleLockButton_Click" ToolTip.Tip="Toggle Lock">
+                                        <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf09c;" Foreground="#555555" FontSize="10"/>
+                                    </Button>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -294,8 +285,11 @@
                             <Button Grid.Column="1" Content="-" x:Name="RemoveAudioLayerButton" Click="RemoveAudioLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Remove Audio Source"/>
                             
                             <ComboBox Grid.Column="2" x:Name="AddAudioLayerTypeComboBox" SelectedIndex="0" Height="20" FontSize="10" VerticalAlignment="Center" Margin="5,0" Padding="5,0" MinHeight="20" HorizontalAlignment="Right">
-                                <ComboBoxItem Content="Microphone" />
-                                <ComboBoxItem Content="System Audio" />
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="core:AudioSource">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
                             </ComboBox>
                         </Grid>
                     </Border>
@@ -312,32 +306,7 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-
-                        <StackPanel Grid.Row="1">
-                            <TextBlock Text="Hardware Encoder" FontWeight="SemiBold" FontSize="12" Foreground="#AAAAAA" Margin="0,5,0,0"/>
-                            <ComboBox x:Name="GpuComboBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="GpuComboBox_SelectionChanged">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate x:DataType="core:GPUDevice">
-                                        <TextBlock Text="{Binding Name}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="2" x:Name="GpuWarningPanel" Orientation="Horizontal" Spacing="5" Margin="0,2,0,0" IsVisible="False">
-                                <TextBlock Text="⚠" Foreground="#FFCC00" FontWeight="Bold" VerticalAlignment="Center"/>
-                                <TextBlock Text="Cross-adapter encoding warning." Foreground="#FFCC00" TextWrapping="Wrap" FontSize="10" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="3">
-                            <CheckBox x:Name="HardwareAccelerationCheckBox" Content="Use HW Acceleration" IsChecked="True" Foreground="#AAAAAA" FontSize="12" Margin="0,2,0,0"/>
-
-                            <TextBlock Text="Save Location" FontWeight="SemiBold" FontSize="12" Foreground="#AAAAAA" Margin="0,5,0,0"/>
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBox x:Name="SaveLocationTextBox" Grid.Column="0" IsReadOnly="True" Margin="0,0,5,0" VerticalAlignment="Center" Height="28" FontSize="11" Padding="5,4"/>
-                                <Button x:Name="SelectFolderButton" Grid.Column="1" Content="..." Click="SelectFolder_Click" Classes="accent" VerticalAlignment="Center" Height="28" Width="32" Padding="0" HorizontalContentAlignment="Center"/>
-                            </Grid>
-                        </StackPanel>
+                        <!-- Settings moved to SettingsWindow -->
                     </Grid>
             </Border> 
         </Grid>

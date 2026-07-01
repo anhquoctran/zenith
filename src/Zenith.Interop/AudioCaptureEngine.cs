@@ -32,11 +32,29 @@ public class AudioCaptureEngine : IDisposable
                 WasapiCapture capture;
                 if (layer.Type == AudioLayerType.SystemAudio)
                 {
-                    capture = new WasapiLoopbackCapture();
+                    if (string.IsNullOrEmpty(layer.SourceId)) 
+                    {
+                        capture = new WasapiLoopbackCapture();
+                    }
+                    else 
+                    {
+                        var enumerator = new MMDeviceEnumerator();
+                        var device = enumerator.GetDevice(layer.SourceId);
+                        capture = new WasapiLoopbackCapture(device);
+                    }
                 }
                 else
                 {
-                    capture = new WasapiCapture();
+                    if (string.IsNullOrEmpty(layer.SourceId))
+                    {
+                        capture = new WasapiCapture();
+                    }
+                    else
+                    {
+                        var enumerator = new MMDeviceEnumerator();
+                        var device = enumerator.GetDevice(layer.SourceId);
+                        capture = new WasapiCapture(device);
+                    }
                 }
 
                 var bufferedProvider = new BufferedWaveProvider(capture.WaveFormat)

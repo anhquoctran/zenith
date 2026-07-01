@@ -46,6 +46,13 @@ public abstract class Layer : INotifyPropertyChanged
         set => SetField(ref _isVisible, value); 
     }
 
+    private bool _isLocked = false;
+    public bool IsLocked
+    {
+        get => _isLocked;
+        set => SetField(ref _isLocked, value);
+    }
+
     private bool _isSelected;
     public bool IsSelected
     {

@@ -1,0 +1,73 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:core="using:Zenith.Core"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+        x:Class="Zenith.UI.SettingsWindow"
+        Title="Settings"
+        Width="600" Height="450"
+        WindowStartupLocation="CenterOwner"
+        CanMaximize="False"
+        CanMinimize="False"
+        CanResize="False"
+        Background="#1E1E1E" Foreground="#ECECEC">
+
+    <Grid RowDefinitions="*,Auto">
+        <!-- Settings Tabs -->
+        <TabControl Grid.Row="0" Margin="10">
+            <!-- Output Settings -->
+            <TabItem Header="Output">
+                <StackPanel Margin="10" Spacing="15">
+                    <TextBlock Text="Recording Output" FontWeight="Bold" FontSize="14" Foreground="#ECECEC"/>
+                    
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Save Location" FontWeight="SemiBold" FontSize="12" Foreground="#AAAAAA"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox x:Name="SaveLocationTextBox" Grid.Column="0" IsReadOnly="True" Margin="0,0,5,0" VerticalAlignment="Center" Height="28" FontSize="11" Padding="5,4"/>
+                            <Button x:Name="SelectFolderButton" Grid.Column="1" Content="Browse..." Click="SelectFolder_Click" Classes="accent" VerticalAlignment="Center" Height="28" Padding="10,0" HorizontalContentAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Spacing="5" Margin="0,10,0,0">
+                        <TextBlock Text="Hardware Encoder" FontWeight="SemiBold" FontSize="12" Foreground="#AAAAAA"/>
+                        <ComboBox x:Name="GpuComboBox" HorizontalAlignment="Stretch" SelectedIndex="0">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="core:GPUDevice">
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <CheckBox x:Name="HardwareAccelerationCheckBox" Content="Use Hardware Acceleration" IsChecked="True" Foreground="#AAAAAA" FontSize="12" Margin="0,5,0,0"/>
+
+                </StackPanel>
+            </TabItem>
+            
+            <!-- Video Settings -->
+            <TabItem Header="Video">
+                <StackPanel Margin="10" Spacing="15">
+                    <TextBlock Text="Video Settings" FontWeight="Bold" FontSize="14" Foreground="#ECECEC"/>
+                    <TextBlock Text="Currently using canvas resolution. More settings coming soon." Foreground="#AAAAAA" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+            </TabItem>
+            
+            <!-- Audio Settings -->
+            <TabItem Header="Audio">
+                <StackPanel Margin="10" Spacing="15">
+                    <TextBlock Text="Audio Settings" FontWeight="Bold" FontSize="14" Foreground="#ECECEC"/>
+                    <TextBlock Text="More settings coming soon." Foreground="#AAAAAA" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <!-- Action Buttons -->
+        <Border Grid.Row="1" Background="#252525" BorderThickness="0,1,0,0" BorderBrush="#333333" Padding="15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                <Button Content="OK" Click="OkButton_Click" Width="80" HorizontalContentAlignment="Center" Background="#007ACC" Foreground="White" BorderThickness="0"/>
+                <Button Content="Cancel" Click="CancelButton_Click" Width="80" HorizontalContentAlignment="Center" Background="#333333" Foreground="White" BorderThickness="0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
