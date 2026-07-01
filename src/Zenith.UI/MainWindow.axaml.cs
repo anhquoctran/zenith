@@ -387,6 +387,52 @@ public partial class MainWindow : Window
         }
     }
 
+    private void MoveUpVideoLayerButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var selectedIndex = VideoLayersListBox.SelectedIndex;
+        if (selectedIndex > 0)
+        {
+            var item = VideoLayers[selectedIndex];
+            VideoLayers.RemoveAt(selectedIndex);
+            VideoLayers.Insert(selectedIndex - 1, item);
+            VideoLayersListBox.SelectedIndex = selectedIndex - 1;
+        }
+    }
+
+    private void MoveDownVideoLayerButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var selectedIndex = VideoLayersListBox.SelectedIndex;
+        if (selectedIndex >= 0 && selectedIndex < VideoLayers.Count - 1)
+        {
+            var item = VideoLayers[selectedIndex];
+            VideoLayers.RemoveAt(selectedIndex);
+            VideoLayers.Insert(selectedIndex + 1, item);
+            VideoLayersListBox.SelectedIndex = selectedIndex + 1;
+        }
+    }
+
+    private void ToggleVisibilityButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.DataContext is VideoLayer layer)
+        {
+            layer.IsVisible = !layer.IsVisible;
+            if (btn.Content is TextBlock tb)
+            {
+                tb.Text = layer.IsVisible ? "\uf06e" : "\uf070";
+                tb.Foreground = new Avalonia.Media.SolidColorBrush(layer.IsVisible ? Avalonia.Media.Color.Parse("#AAAAAA") : Avalonia.Media.Color.Parse("#555555"));
+            }
+        }
+    }
+
+    private void EditVideoLayerButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.DataContext is VideoLayer layer)
+        {
+            var propsWindow = new LayerPropertiesWindow(layer);
+            propsWindow.ShowDialog(this);
+        }
+    }
+
     private async void RecordButton_Click(object? sender, RoutedEventArgs e)
     {
         HardwareAccelerationCheckBox.IsEnabled = false;
