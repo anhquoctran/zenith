@@ -334,25 +334,56 @@ public partial class MainWindow : Window
         if (AddVideoLayerTypeComboBox.SelectedItem is ComboBoxItem item && item.Content != null)
         {
             var typeStr = item.Content.ToString();
+            var typeLayer = typeStr switch
+            {
+                "Screen" => LayerType.Screen,
+                "Image" => LayerType.Image,
+                "Video File" => LayerType.VideoFile,
+                "Text" => LayerType.Text,
+                "Camera" => LayerType.Camera,
+                "FPS Counter" => LayerType.FpsCounter,
+                _ => LayerType.Screen
+            };
+            
             var newLayer = new VideoLayer
             {
                 Name = $"New {typeStr}",
-                Type = typeStr switch
-                {
-                    "Screen" => LayerType.Screen,
-                    "Image" => LayerType.Image,
-                    "Video File" => LayerType.VideoFile,
-                    "Text" => LayerType.Text,
-                    "Camera" => LayerType.Camera,
-                    "FPS Counter" => LayerType.FpsCounter,
-                    _ => LayerType.Screen
-                },
-                Width = 1920,
-                Height = 1080
+                Type = typeLayer
             };
             
             // Give a default text for text layers
-            if (newLayer.Type == LayerType.Text) newLayer.TextContent = "Hello World";
+            if (newLayer.Type == LayerType.Text)
+            {
+                newLayer.TextContent = "Hello World";
+                var typeface = new Avalonia.Media.Typeface(newLayer.FontFamily ?? "Arial");
+                var formattedText = new Avalonia.Media.FormattedText(
+                    newLayer.TextContent,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    Avalonia.Media.FlowDirection.LeftToRight,
+                    typeface,
+                    newLayer.FontSize > 0 ? newLayer.FontSize : 48,
+                    null);
+                
+                newLayer.Width = (int)Math.Ceiling(formattedText.Width) + 10;
+                newLayer.Height = (int)Math.Ceiling(formattedText.Height) + 10;
+                newLayer.X = 1920 / 2 - newLayer.Width / 2;
+                newLayer.Y = 1080 / 2 - newLayer.Height / 2;
+            }
+            else if (newLayer.Type == LayerType.Screen)
+            {
+                newLayer.Width = 1920;
+                newLayer.Height = 1080;
+                newLayer.X = 0;
+                newLayer.Y = 0;
+            }
+            else
+            {
+                // Default size for Camera, Image, Video File, FPS Counter: 1/3 of screen, centered
+                newLayer.Width = 640;
+                newLayer.Height = 360;
+                newLayer.X = 1920 / 2 - newLayer.Width / 2;
+                newLayer.Y = 1080 / 2 - newLayer.Height / 2;
+            }
             
             VideoLayers.Add(newLayer);
         }

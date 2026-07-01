@@ -20,16 +20,49 @@
                 
                 <StackPanel x:Name="TextPropertiesPanel" Spacing="10" IsVisible="False">
                     <TextBlock Text="Text Content" Foreground="#AAAAAA" FontSize="12" Margin="0,10,0,0"/>
-                    <TextBox x:Name="TextContentTextBox" AcceptsReturn="True" Height="100" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333"/>
+                    <TextBox x:Name="TextContentTextBox" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333" AcceptsReturn="True" Height="80"/>
                     
                     <TextBlock Text="Font Family" Foreground="#AAAAAA" FontSize="12"/>
                     <TextBox x:Name="FontFamilyTextBox" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333"/>
                     
-                    <TextBlock Text="Font Size" Foreground="#AAAAAA" FontSize="12"/>
-                    <NumericUpDown x:Name="FontSizeNumeric" Minimum="1" Maximum="300" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333"/>
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                            <TextBlock Text="Font Size" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,10"/>
+                            <NumericUpDown x:Name="FontSizeNumeric" Minimum="8" Maximum="800" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                            <TextBlock Text="Font Color (Hex)" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,10"/>
+                            <TextBox x:Name="FontColorTextBox" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333"/>
+                        </StackPanel>
+                    </Grid>
                     
-                    <TextBlock Text="Font Color (Hex)" Foreground="#AAAAAA" FontSize="12"/>
-                    <TextBox x:Name="FontColorTextBox" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333"/>
+                    <Grid ColumnDefinitions="*,*,*">
+                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                            <TextBlock Text="Font Style" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,10"/>
+                            <ComboBox x:Name="FontStyleComboBox" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="Normal"/>
+                                <ComboBoxItem Content="Italic"/>
+                                <ComboBoxItem Content="Oblique"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="5,0,5,0">
+                            <TextBlock Text="Font Weight" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,10"/>
+                            <ComboBox x:Name="FontWeightComboBox" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="Normal"/>
+                                <ComboBoxItem Content="Bold"/>
+                                <ComboBoxItem Content="Light"/>
+                                <ComboBoxItem Content="Black"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="5,0,0,0">
+                            <TextBlock Text="Alignment" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,10"/>
+                            <ComboBox x:Name="TextAlignmentComboBox" Background="#2B2B2B" Foreground="#ECECEC" BorderBrush="#333333" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="Left"/>
+                                <ComboBoxItem Content="Center"/>
+                                <ComboBoxItem Content="Right"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
 
                 <StackPanel x:Name="FilePropertiesPanel" Spacing="10" IsVisible="False">

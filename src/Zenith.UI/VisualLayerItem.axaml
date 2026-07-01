@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="using:Zenith.Core"
+             x:Class="Zenith.UI.VisualLayerItem"
+             x:DataType="core:VideoLayer"
+             Background="Transparent">
+
+    <UserControl.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Bring to Front" Click="BringToFront_Click"/>
+            <MenuItem Header="Send to Back" Click="SendToBack_Click"/>
+            <Separator/>
+            <MenuItem Header="Rotate 90°" Click="Rotate90_Click"/>
+            <MenuItem Header="Flip Horizontal" Click="FlipHorizontal_Click"/>
+            <MenuItem Header="Flip Vertical" Click="FlipVertical_Click"/>
+            <Separator/>
+            <MenuItem Header="Delete" Click="Delete_Click"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
+
+    <Border x:Name="TransformBorder" RenderTransformOrigin="50%,50%">
+        <Panel>
+            <!-- Screen Preview (bound to existing static bitmap in VisualLayerEditor for WYSIWYG) -->
+            <Image x:Name="ScreenImage" Stretch="Fill" IsVisible="False"/>
+
+            <!-- Camera / Image Preview -->
+            <Image x:Name="MediaImage" Stretch="UniformToFill" IsVisible="False"/>
+
+            <!-- Text Preview -->
+            <TextBlock x:Name="TextDisplay" 
+                       IsVisible="False"
+                       Text="{Binding TextContent}" 
+                       FontSize="{Binding FontSize}" 
+                       DoubleTapped="TextDisplay_DoubleTapped"
+                       Background="Transparent"/>
+
+            <!-- Inline Text Editor -->
+            <TextBox x:Name="TextEditor" 
+                     IsVisible="False"
+                     Text="{Binding TextContent}"
+                     FontSize="{Binding FontSize}"
+                     AcceptsReturn="True"
+                     LostFocus="TextEditor_LostFocus"
+                     KeyDown="TextEditor_KeyDown"/>
+        </Panel>
+    </Border>
+
+</UserControl>

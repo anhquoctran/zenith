@@ -9,6 +9,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
+using System.Text.Json;
 using Zenith.Core;
 
 namespace Zenith.UI;
@@ -24,6 +25,8 @@ public partial class VisualLayerEditor : UserControl
     private bool _isResizing;
     private string _resizeHandle = "";
     private Point _lastMousePosition;
+    
+    private static string? _clipboardJson;
     
     // Adorner visuals
     private Rectangle? _selectionBox;
@@ -286,5 +289,63 @@ public partial class VisualLayerEditor : UserControl
     {
         _isDragging = false;
         _isResizing = false;
+    }
+
+    private void UserControl_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (VideoLayers == null) return;
+
+        bool ctrl = (e.KeyModifiers & KeyModifiers.Control) != 0;
+
+        if (e.Key == Key.Delete || e.Key == Key.Back)
+        {
+            if (_selectedLayer != null)
+            {
+                VideoLayers.Remove(_selectedLayer);
+                _selectedLayer = null;
+                UpdateAdorners();
+            }
+        }
+        else if (ctrl && e.Key == Key.C)
+        {
+            if (_selectedLayer != null)
+            {
+                _clipboardJson = JsonSerializer.Serialize(_selectedLayer);
+            }
+        }
+        else if (ctrl && e.Key == Key.X)
+        {
+            if (_selectedLayer != null)
+            {
+                _clipboardJson = JsonSerializer.Serialize(_selectedLayer);
+                VideoLayers.Remove(_selectedLayer);
+                _selectedLayer = null;
+                UpdateAdorners();
+            }
+        }
+        else if (ctrl && e.Key == Key.V)
+        {
+            if (!string.IsNullOrEmpty(_clipboardJson))
+            {
+                try
+                {
+                    var newLayer = JsonSerializer.Deserialize<VideoLayer>(_clipboardJson);
+                    if (newLayer != null)
+                    {
+                        newLayer.Id = Guid.NewGuid().ToString();
+                        newLayer.Name = newLayer.Name + " (Copy)";
+                        newLayer.X += 20;
+                        newLayer.Y += 20;
+                        newLayer.IsSelected = true;
+                        
+                        // Deselect others
+                        foreach (var l in VideoLayers) l.IsSelected = false;
+                        
+                        VideoLayers.Add(newLayer);
+                    }
+                }
+                catch { }
+            }
+        }
     }
 }

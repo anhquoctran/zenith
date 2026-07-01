@@ -1,8 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:core="using:Zenith.Core"
+             xmlns:local="using:Zenith.UI"
              x:Class="Zenith.UI.VisualLayerEditor"
-             ClipToBounds="True">
+             ClipToBounds="True"
+             Focusable="True"
+             KeyDown="UserControl_KeyDown">
 
     <UserControl.Styles>
         <Style Selector="Thumb.ResizeHandle">
@@ -34,18 +37,16 @@
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             
+            <ItemsControl.Styles>
+                <Style Selector="ContentPresenter" x:DataType="core:VideoLayer">
+                    <Setter Property="Canvas.Left" Value="{Binding X}" />
+                    <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                </Style>
+            </ItemsControl.Styles>
+            
             <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="core:Layer">
-                    <Border x:Name="LayerBorder"
-                            BorderBrush="{Binding IsSelected, Converter={x:Static ObjectConverters.IsNull}}"
-                            BorderThickness="2"
-                            Background="Transparent"
-                            IsHitTestVisible="False">
-                        <!-- We will manage the actual visual bounding boxes in code-behind for simplicity,
-                             or we can use DataBinding here. For maximum performance and coordinate mapping,
-                             code-behind is sometimes easier for drag handles in Avalonia without AdornerLayer.
-                             Wait, let's just do it cleanly in code-behind! -->
-                    </Border>
+                <DataTemplate x:DataType="core:VideoLayer">
+                    <local:VisualLayerItem Width="{Binding Width}" Height="{Binding Height}" />
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

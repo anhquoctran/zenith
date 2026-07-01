@@ -32,6 +32,10 @@ public partial class LayerPropertiesWindow : Window
             FontFamilyTextBox.Text = _layer.FontFamily;
             FontSizeNumeric.Value = _layer.FontSize;
             FontColorTextBox.Text = _layer.FontColor;
+            
+            SetComboBoxSelection(FontStyleComboBox, _layer.FontStyle);
+            SetComboBoxSelection(FontWeightComboBox, _layer.FontWeight);
+            SetComboBoxSelection(TextAlignmentComboBox, _layer.TextAlignment);
         }
         else if (_layer.Type == LayerType.Image || _layer.Type == LayerType.VideoFile)
         {
@@ -81,6 +85,10 @@ public partial class LayerPropertiesWindow : Window
             _layer.FontFamily = FontFamilyTextBox.Text ?? "Arial";
             _layer.FontSize = (int)(FontSizeNumeric.Value ?? 48);
             _layer.FontColor = FontColorTextBox.Text ?? "#FFFFFF";
+            
+            _layer.FontStyle = (FontStyleComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Normal";
+            _layer.FontWeight = (FontWeightComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Normal";
+            _layer.TextAlignment = (TextAlignmentComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Left";
         }
         else if (_layer.Type == LayerType.Image || _layer.Type == LayerType.VideoFile)
         {
@@ -100,5 +108,19 @@ public partial class LayerPropertiesWindow : Window
     private void CancelButton_Click(object? sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void SetComboBoxSelection(ComboBox comboBox, string value)
+    {
+        if (string.IsNullOrEmpty(value)) value = "Normal";
+        
+        foreach (ComboBoxItem item in comboBox.Items)
+        {
+            if (item.Content?.ToString() == value)
+            {
+                comboBox.SelectedItem = item;
+                break;
+            }
+        }
     }
 }

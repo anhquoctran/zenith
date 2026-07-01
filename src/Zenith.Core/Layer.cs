@@ -84,9 +84,18 @@ public class VideoLayer : Layer
     private int _height;
     public int Height { get => _height; set => SetField(ref _height, value); }
 
-    // Used for Screen (stores monitor/window ID)
     public string SourceId { get; set; } = string.Empty;
     public IntPtr MonitorHandle { get; set; } = IntPtr.Zero;
+    
+    // Transform
+    private double _rotationAngle;
+    public double RotationAngle { get => _rotationAngle; set => SetField(ref _rotationAngle, value); }
+    
+    private bool _flipHorizontal;
+    public bool FlipHorizontal { get => _flipHorizontal; set => SetField(ref _flipHorizontal, value); }
+    
+    private bool _flipVertical;
+    public bool FlipVertical { get => _flipVertical; set => SetField(ref _flipVertical, value); }
     
     // Used for Image/Video
     private string _filePath = string.Empty;
@@ -104,6 +113,15 @@ public class VideoLayer : Layer
     
     private string _fontColor = "#FFFFFF";
     public string FontColor { get => _fontColor; set => SetField(ref _fontColor, value); }
+    
+    private string _fontStyle = "Normal";
+    public string FontStyle { get => _fontStyle; set => SetField(ref _fontStyle, value); }
+    
+    private string _fontWeight = "Normal";
+    public string FontWeight { get => _fontWeight; set => SetField(ref _fontWeight, value); }
+    
+    private string _textAlignment = "Left";
+    public string TextAlignment { get => _textAlignment; set => SetField(ref _textAlignment, value); }
 }
 
 public class AudioLayer : Layer
