@@ -108,7 +108,11 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
             if (factory != null)
             {
                 var targetGpuId = config.SelectedGpuId;
-                if (targetGpuId == "Auto" && config.MonitorHandle != IntPtr.Zero)
+                
+                var baseScreen = config.VideoLayers.FirstOrDefault(v => v.Type == LayerType.Screen);
+                var monitorHandle = baseScreen?.MonitorHandle ?? IntPtr.Zero;
+                
+                if (targetGpuId == "Auto" && monitorHandle != IntPtr.Zero)
                 {
                     var adapterIndex = 0;
                     while (factory.EnumAdapters1(adapterIndex, out var adapter).Success)
@@ -116,7 +120,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                         var outputIndex = 0;
                         while (adapter.EnumOutputs(outputIndex, out var output).Success)
                         {
-                            if (output.Description.Monitor == config.MonitorHandle)
+                            if (output.Description.Monitor == monitorHandle)
                             {
                                 selectedAdapter = adapter;
                                 break;
@@ -167,12 +171,10 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         }
 #endif
 
-        if (config.EnableWebcam)
+        if (config.VideoLayers.Any(l => l.Type == LayerType.VideoFile || l.Type == LayerType.Image || l.Type == LayerType.Text))
         {
-            // Scaffold AVFilter Graph for PiP (Picture-in-Picture)
-            _filterGraph = ffmpeg.avfilter_graph_alloc();
-            var filterArgs = "[in_desktop] [in_webcam] overlay=W-w-10:H-h-10 [out]";
-            Console.WriteLine($"Initialized FFmpeg Filter Graph for Webcam PiP: {filterArgs}");
+            // We will implement complex FFmpeg filter graphs later
+            Console.WriteLine("Complex layers detected. Will require filter graph implementation.");
         }
 
         return Task.CompletedTask;
@@ -185,20 +187,17 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
         
         try
         {
-            IntPtr hMonitor;
-            if (_config.MonitorHandle != IntPtr.Zero)
+            var baseScreen = _config.VideoLayers.FirstOrDefault(v => v.Type == LayerType.Screen);
+            IntPtr hMonitor = baseScreen?.MonitorHandle ?? IntPtr.Zero;
+            
+            if (hMonitor == IntPtr.Zero)
             {
-                hMonitor = _config.MonitorHandle;
-            }
-            else if (_config.CaptureRegion.HasValue)
-            {
-                var region = _config.CaptureRegion.Value;
-                var centerPoint = new System.Drawing.Point(region.X + region.Width / 2, region.Y + region.Height / 2);
+                var cx = baseScreen?.X ?? 0;
+                var cy = baseScreen?.Y ?? 0;
+                var cw = baseScreen?.Width ?? _config.Width;
+                var ch = baseScreen?.Height ?? _config.Height;
+                var centerPoint = new System.Drawing.Point(cx + cw / 2, cy + ch / 2);
                 hMonitor = MonitorFromPoint(centerPoint, 2 /* MONITOR_DEFAULTTONEAREST */);
-            }
-            else
-            {
-                hMonitor = MonitorFromWindow(IntPtr.Zero, 1 /* MONITOR_DEFAULTTOPRIMARY */);
             }
 
             var hString = IntPtr.Zero;
@@ -214,22 +213,11 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                 var ptr = factory.CreateForMonitor(hMonitor, ref captureItemGuid);
                 var captureItem = WinRT.MarshalInterface<GraphicsCaptureItem>.FromAbi(ptr);
 
-                // The capture frame will be at captureItem.Size (full monitor pixel size)
                 var captureW = captureItem!.Size.Width;
                 var captureH = captureItem.Size.Height;
                 
-                // Store monitor origin for crop offset calculation in EncodeLoop
-                // CaptureRegion is in screen coords; captured texture starts at (0,0)
-                if (_config.CaptureRegion.HasValue)
-                {
-                    _monitorOriginX = _config.CaptureRegion.Value.X;
-                    _monitorOriginY = _config.CaptureRegion.Value.Y;
-                }
-                else
-                {
-                    _monitorOriginX = 0;
-                    _monitorOriginY = 0;
-                }
+                _monitorOriginX = baseScreen?.X ?? 0;
+                _monitorOriginY = baseScreen?.Y ?? 0;
                 
                 // Output dimensions: use config Width/Height (which may be a sub-region)
                 var outputW = _config.Width;
@@ -354,7 +342,7 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     SampleDescription = new Vortice.DXGI.SampleDescription(1, 0),
                     Usage = ResourceUsage.Staging,
                     BindFlags = BindFlags.None,
-                    CPUAccessFlags = CpuAccessFlags.Read,
+                    CPUAccessFlags = CpuAccessFlags.Read | CpuAccessFlags.Write,
                     MiscFlags = ResourceOptionFlags.None
                 });
 
@@ -462,7 +450,41 @@ public unsafe class FFmpegRecorderEngine : IRecorderEngine
                     var cropY = 0;
                     d3dContext.CopySubresourceRegion(_stagingTexture, 0, 0, 0, 0, texture, 0, new Box(cropX, cropY, 0, cropX + _config.Width, cropY + _config.Height, 1));
                     
-                    var mapped = d3dContext.Map(_stagingTexture, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+                    var mapped = d3dContext.Map(_stagingTexture, 0, MapMode.ReadWrite, Vortice.Direct3D11.MapFlags.None);
+                    
+                    // --- COMPOSITING ENGINE ---
+                    // Draw additional layers (Image, Text) using GDI+
+                    if (_config.VideoLayers.Count > 1)
+                    {
+                        using var bmp = new System.Drawing.Bitmap(_config.Width, _config.Height, mapped.RowPitch, System.Drawing.Imaging.PixelFormat.Format32bppArgb, mapped.DataPointer);
+                        using var g = System.Drawing.Graphics.FromImage(bmp);
+                        
+                        foreach (var layer in _config.VideoLayers)
+                        {
+                            if (!layer.IsVisible) continue;
+                            if (layer.Type == LayerType.Screen) continue; // Base layer already in buffer
+                            
+                            if (layer.Type == LayerType.Image && !string.IsNullOrEmpty(layer.FilePath) && System.IO.File.Exists(layer.FilePath))
+                            {
+                                try
+                                {
+                                    using var overlayBmp = new System.Drawing.Bitmap(layer.FilePath);
+                                    g.DrawImage(overlayBmp, layer.X, layer.Y, layer.Width, layer.Height);
+                                } catch { }
+                            }
+                            else if (layer.Type == LayerType.Text && !string.IsNullOrEmpty(layer.TextContent))
+                            {
+                                try
+                                {
+                                    var fontColor = System.Drawing.ColorTranslator.FromHtml(layer.FontColor);
+                                    using var brush = new System.Drawing.SolidBrush(fontColor);
+                                    using var font = new System.Drawing.Font(layer.FontFamily, layer.FontSize);
+                                    g.DrawString(layer.TextContent, font, brush, layer.X, layer.Y);
+                                } catch { }
+                            }
+                        }
+                    }
+                    // --------------------------
                     
                     var avFrame = ffmpeg.av_frame_alloc();
                     avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_YUV420P;

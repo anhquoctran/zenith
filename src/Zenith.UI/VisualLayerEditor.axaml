@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="using:Zenith.Core"
+             x:Class="Zenith.UI.VisualLayerEditor"
+             ClipToBounds="True">
+
+    <UserControl.Styles>
+        <Style Selector="Thumb.ResizeHandle">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
+            <Setter Property="Background" Value="#007ACC" />
+            <Setter Property="BorderBrush" Value="White" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="5" />
+                </ControlTemplate>
+            </Setter>
+        </Style>
+    </UserControl.Styles>
+
+    <Canvas x:Name="EditorCanvas" Background="Transparent"
+            PointerPressed="EditorCanvas_PointerPressed"
+            PointerMoved="EditorCanvas_PointerMoved"
+            PointerReleased="EditorCanvas_PointerReleased">
+        
+        <ItemsControl x:Name="LayersItemsControl">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="core:Layer">
+                    <Border x:Name="LayerBorder"
+                            BorderBrush="{Binding IsSelected, Converter={x:Static ObjectConverters.IsNull}}"
+                            BorderThickness="2"
+                            Background="Transparent"
+                            IsHitTestVisible="False">
+                        <!-- We will manage the actual visual bounding boxes in code-behind for simplicity,
+                             or we can use DataBinding here. For maximum performance and coordinate mapping,
+                             code-behind is sometimes easier for drag handles in Avalonia without AdornerLayer.
+                             Wait, let's just do it cleanly in code-behind! -->
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        
+        <!-- We will dynamically generate bounding boxes and resize handles in Code-Behind for selected layers -->
+        
+    </Canvas>
+
+</UserControl>

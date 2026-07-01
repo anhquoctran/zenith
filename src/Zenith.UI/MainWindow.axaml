@@ -6,10 +6,10 @@
         x:Class="Zenith.UI.MainWindow"
         Title="Zenith"
         Icon="/Assets/logo.png"
-        Width="900" 
-        Height="850"
-        MinHeight="850"
-        MinWidth="900"
+        Width="1280" 
+        Height="720"
+        MinHeight="720"
+        MinWidth="1280"
         WindowStartupLocation="CenterScreen"
         Background="#1E1E1E"
         TransparencyLevelHint="Mica"
@@ -31,168 +31,311 @@
         </Style>
     </Window.Styles>
 
-    <Panel>
-        <!-- Main Content -->
-        <Grid ColumnDefinitions="350,*" Margin="0,30,0,28">
-        <Border Grid.Column="0" Background="#252526" BorderBrush="#333333" BorderThickness="0,0,1,0" Padding="20">
-            <StackPanel Spacing="15">
-                <TextBlock Text="Source Selection" FontSize="20" FontWeight="Bold" Foreground="#ECECEC"/>
-                
-                <TextBlock Text="Video Source" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
-                <ComboBox x:Name="VideoSourceComboBox" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="VideoSourceComboBox_SelectionChanged">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="core:VideoSource">
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                
-                <TextBlock Text="Camera" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
-                <ComboBox x:Name="CameraComboBox" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="CameraComboBox_SelectionChanged">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="core:WebcamSource">
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" /> <!-- Title Bar Area (Empty for dragging) -->
+            <RowDefinition Height="Auto" /> <!-- Menu -->
+            <RowDefinition Height="*" /> <!-- Main Layout -->
+            <RowDefinition Height="Auto" /> <!-- Status Bar -->
+        </Grid.RowDefinitions>
 
-                <TextBlock Text="Audio Source" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
-                <ComboBox x:Name="AudioSourceComboBox" SelectedIndex="0" HorizontalAlignment="Stretch">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="core:AudioSource">
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-
-                <Border Background="#1A1A1A" CornerRadius="8" Height="60" Margin="0,10,0,0">
-                    <Canvas x:Name="WaveformCanvas" ClipToBounds="True">
-                        <!-- Waveform drawn here via code-behind -->
-                    </Canvas>
-                </Border>
-
-                  <CheckBox x:Name="HardwareAccelerationCheckBox" Content="Use Hardware Acceleration (GPU)" IsChecked="True" Foreground="#AAAAAA" Margin="0,5,0,0"/>
-
-                 <TextBlock Text="Hardware Encoder" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
-                 <ComboBox x:Name="GpuComboBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="GpuComboBox_SelectionChanged">
-                     <ComboBox.ItemTemplate>
-                         <DataTemplate x:DataType="core:GPUDevice">
-                             <TextBlock Text="{Binding Name}" />
-                         </DataTemplate>
-                     </ComboBox.ItemTemplate>
-                 </ComboBox>
-                 
-                 <StackPanel x:Name="GpuWarningPanel" Orientation="Horizontal" Spacing="5" Margin="0,5,0,0" IsVisible="False">
-                     <TextBlock Text="⚠" Foreground="#FFCC00" FontWeight="Bold" VerticalAlignment="Center"/>
-                     <TextBlock Text="Selected GPU differs from display GPU. Cross-adapter encoding may reduce performance." Foreground="#FFCC00" TextWrapping="Wrap" FontSize="11" VerticalAlignment="Center"/>
-                 </StackPanel>
-
-                <TextBlock Text="Save Location" FontWeight="SemiBold" Foreground="#AAAAAA" Margin="0,10,0,0"/>
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBox x:Name="SaveLocationTextBox" Grid.Column="0" IsReadOnly="True" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <Button x:Name="SelectFolderButton" Grid.Column="1" Content="..." Click="SelectFolder_Click" Classes="accent" VerticalAlignment="Center"/>
-                </Grid>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,20,0,0">
-                    <Button x:Name="RecordButton" Click="RecordButton_Click" Background="#FF4444" Foreground="White" Width="48" Height="48" CornerRadius="24" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Record">
-                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf111;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    </Button>
-                    <Button x:Name="StopButton" Click="StopButton_Click" Background="#007ACC" Foreground="White" Width="48" Height="48" CornerRadius="24" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="Stop">
-                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf04d;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    </Button>
-                </StackPanel>
-                
-                <TextBlock x:Name="ElapsedTimeText" Text="00:00:00" Foreground="#FF4444" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,0" IsVisible="False"/>
-            </StackPanel>
+        <!-- Top Menu Bar -->
+        <Border Grid.Row="1" Height="30" Background="#1A1A1A" BorderBrush="#222222" BorderThickness="0,0,0,1">
+            <Menu Background="Transparent" FontSize="12"  Foreground="#ECECEC" VerticalAlignment="Center" Margin="10,0,0,0">
+                <MenuItem Header="_File">
+                    <MenuItem Header="Show Recordings"/>
+                    <MenuItem Header="Remux Recordings"/>
+                    <Separator/>
+                    <MenuItem Header="Settings"/>
+                    <Separator/>
+                    <MenuItem Header="Exit"/>
+                </MenuItem>
+                <MenuItem Header="_Edit">
+                    <MenuItem Header="Undo"/>
+                    <MenuItem Header="Redo"/>
+                </MenuItem>
+                <MenuItem Header="_View">
+                    <MenuItem Header="Docks"/>
+                </MenuItem>
+                <MenuItem Header="_Profile">
+                    <MenuItem Header="Default"/>
+                </MenuItem>
+                <MenuItem Header="_Scene Collection">
+                    <MenuItem Header="Default"/>
+                </MenuItem>
+                <MenuItem Header="_Tools">
+                    <MenuItem Header="Scripts"/>
+                </MenuItem>
+                <MenuItem Header="_Help">
+                    <MenuItem Header="About Zenith"/>
+                </MenuItem>
+            </Menu>
         </Border>
 
-        <!-- Right Pane: Preview & History -->
-        <Grid Grid.Column="1" Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <Grid Grid.Row="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <TextBlock Grid.Row="0" Text="Preview" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,10"/>
+        <!-- Main Content (OBS-style Layout) -->
+        <Grid Grid.Row="2" RowDefinitions="*, 300" ColumnDefinitions="350, *, 300" Margin="4,4,4,4" RowSpacing="4" ColumnSpacing="4">
             
-                <Border Grid.Row="1" Background="#252526" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" MinHeight="300" MaxHeight="500" Margin="0,0,0,20" ClipToBounds="True">
-                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Image x:Name="PreviewImage" Stretch="Uniform" />
-                        <Border x:Name="CameraPreviewOverlay" IsVisible="False" CornerRadius="8" BorderBrush="#555555" BorderThickness="2" Width="160" Height="90" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10" ClipToBounds="True">
-                            <Image x:Name="CameraPreviewImage" Stretch="UniformToFill" />
-                        </Border>
+            <!-- Dock 0: History -->
+            <Border Grid.Row="0" Grid.Column="0" Background="#252526" BorderBrush="#333333" BorderThickness="1" Margin="0" Padding="5">
+                <Grid RowDefinitions="Auto,*">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
+                        <TextBlock Grid.Column="0" Text="Recording History" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnClearHistory" Click="BtnClearHistory_Click" Grid.Column="1" ToolTip.Tip="Clear History" Width="28" Height="28" CornerRadius="14" Margin="0,0,5,0" Padding="0">
+                            <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf1f8;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                        <Button x:Name="BtnRefreshHistory" Click="BtnRefreshHistory_Click" Grid.Column="2" ToolTip.Tip="Refresh" Width="28" Height="28" CornerRadius="14" Padding="0">
+                            <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf021;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
                     </Grid>
-                </Border>
-            </Grid>
-
-            <Grid Grid.Row="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <Grid Grid.Row="0" VerticalAlignment="Center" Margin="0,0,0,20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Recording History" FontSize="20" FontWeight="Bold" Foreground="#ECECEC" Margin="0,0,0,15"/>
-                    <Button x:Name="BtnClearHistory" Click="BtnClearHistory_Click" Grid.Column="1" ToolTip.Tip="Clear History" Width="38" Height="38" CornerRadius="19" Margin="0,0,10,0">
-                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf1f8;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    </Button>
-                    <Button x:Name="BtnRefreshHistory" Click="BtnRefreshHistory_Click" HorizontalAlignment="Right" Grid.Column="2" ToolTip.Tip="Refresh" Width="38" Height="38" CornerRadius="19" >
-                        <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf021;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    </Button>
-                </Grid>
-
-                
-                <ListBox x:Name="HistoryListBox" Grid.Row="1" Background="Transparent" BorderThickness="0">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="data:Record">
-                            <Border Background="#2D2D30" CornerRadius="8" Padding="15" Margin="0,0,0,10">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Border Grid.Column="0" Width="100" Height="56" Background="#111111" CornerRadius="4" ClipToBounds="True">
-                                        <Image Source="{Binding ThumbnailPath, Converter={StaticResource PathToBitmapConverter}}" Stretch="UniformToFill" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock 
-                                            Text="{Binding FileName}" 
-                                            TextTrimming="CharacterEllipsis" 
-                                            TextWrapping="NoWrap" 
-                                            FontWeight="SemiBold"
-                                            FontSize="16" 
-                                            Foreground="#ECECEC"
-                                            />
-                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                                            <TextBlock Text="{Binding Resolution}" Foreground="#AAAAAA" FontSize="12"/>
+                    
+                    <ListBox x:Name="HistoryListBox" Grid.Row="1" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,-5,0,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="data:Record">
+                                <Border Background="#2D2D30" CornerRadius="6" Padding="8" Margin="0,0,0,5">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Border Grid.Column="0" Width="60" Height="34" Background="#111111" CornerRadius="4" ClipToBounds="True">
+                                            <Image Source="{Binding ThumbnailPath, Converter={StaticResource PathToBitmapConverter}}" Stretch="UniformToFill" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" FontWeight="SemiBold" FontSize="13" Foreground="#ECECEC"/>
+                                            <TextBlock Text="{Binding Resolution}" Foreground="#AAAAAA" FontSize="10" Margin="0,2,0,0"/>
                                         </StackPanel>
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="2" Text="{Binding Duration, StringFormat={}{0:hh\\:mm\\:ss}}" Foreground="#ECECEC" VerticalAlignment="Center" FontSize="14" FontWeight="Medium"/>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                                        <TextBlock Grid.Column="2" Text="{Binding Duration, StringFormat={}{0:hh\\:mm\\:ss}}" Foreground="#ECECEC" VerticalAlignment="Center" FontSize="11" FontWeight="Medium"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
-                <!-- Placeholder when history is empty -->
-                <StackPanel x:Name="EmptyHistoryPlaceholder" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" IsVisible="False">
-                    <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Foreground="#555555"/>
-                    <TextBlock Text="No recordings yet" FontSize="16" FontWeight="SemiBold" Foreground="#888888" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Your recorded screen videos will appear here." FontSize="12" Foreground="#666666" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
+                    <StackPanel x:Name="EmptyHistoryPlaceholder" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="5" IsVisible="False">
+                        <TextBlock Text="📁" FontSize="32" HorizontalAlignment="Center" Foreground="#555555"/>
+                        <TextBlock Text="No recordings" FontSize="13" FontWeight="SemiBold" Foreground="#888888" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Preview Area -->
+            <Border Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="0" Background="#1A1A1A" BorderBrush="#333333" BorderThickness="1" ClipToBounds="True">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition MaxHeight="50" />
+                    </Grid.RowDefinitions>
+
+                    <Viewbox Grid.Row="0" Stretch="Uniform">
+                        <Grid Width="1920" Height="1080">
+                            <Image x:Name="PreviewImage" Stretch="Fill" />
+                            <local:VisualLayerEditor x:Name="LayerEditor" />
+                        </Grid>
+                    </Viewbox>
+
+                    <Border Grid.Row="1" BorderThickness="1" Padding="15">
+                        <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock x:Name="ElapsedTimeText" Text="00:00:00" Foreground="White" FontSize="13" FontWeight="Regular" HorizontalAlignment="Center" IsVisible="true"/>
+                            <Button x:Name="RecordButton" Click="RecordButton_Click" Background="Transparent" Foreground="White" Width="38" Height="38" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Record">
+                                <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf111;" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Button>
+                            <Button x:Name="StopButton" Click="StopButton_Click" Background="Transparent" Foreground="White" Width="38" Height="38" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False" ToolTip.Tip="Stop">
+                                <TextBlock FontFamily="{StaticResource FontAwesome}" FontWeight="900" Text="&#xf04d;" FontSize="22" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Dock 1: Sources (Video Layers) -->
+            <Border Grid.Row="1" Grid.Column="0" Background="#252526" BorderBrush="#333333" BorderThickness="1" Margin="0" Padding="5">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Row="0" Text="Sources" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" Margin="0,0,0,5"/>
+                    
+                    <ListBox x:Name="VideoLayersListBox" Grid.Row="1" Background="#1E1E1E" BorderThickness="1" BorderBrush="#333333" CornerRadius="0" Padding="0">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="4,2"/>
+                                <Setter Property="MinHeight" Value="24"/>
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="core:VideoLayer">
+                                <Grid ColumnDefinitions="Auto, *, Auto" Margin="2">
+                                    <TextBlock Grid.Column="0" FontFamily="{StaticResource FontAwesome}" Text="&#xf06e;" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="5,0,10,0" FontSize="10"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" Foreground="#ECECEC" FontSize="12"/>
+                                    <TextBlock Grid.Column="2" FontFamily="{StaticResource FontAwesome}" Text="&#xf023;" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="10,0,5,0" FontSize="10"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Border Grid.Row="2" Background="#2B2B2B" BorderThickness="1,0,1,1" BorderBrush="#333333" Height="26" Margin="0">
+                        <Grid ColumnDefinitions="Auto, Auto, *, Auto, Auto">
+                            <Button Grid.Column="0" Content="+" x:Name="AddVideoLayerButton" Click="AddVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Add Source"/>
+                            <Button Grid.Column="1" Content="-" x:Name="RemoveVideoLayerButton" Click="RemoveVideoLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Remove Source"/>
+                            
+                            <ComboBox Grid.Column="2" x:Name="AddVideoLayerTypeComboBox" SelectedIndex="0" Height="20" FontSize="10" VerticalAlignment="Center" Margin="5,0" Padding="5,0" MinHeight="20">
+                                <ComboBoxItem Content="Screen" />
+                                <ComboBoxItem Content="Image" />
+                                <ComboBoxItem Content="Video File" />
+                                <ComboBoxItem Content="Text" />
+                            </ComboBox>
+
+                            <Button Grid.Column="3" Content="^" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Move Up"/>
+                            <Button Grid.Column="4" Content="v" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Move Down"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Dock 2: Mixer & Output -->
+            <Border Grid.Row="1" Grid.Column="1" Background="#252526" BorderBrush="#333333" BorderThickness="1" Margin="0" Padding="5">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Row="0" Text="Audio Mixer" FontWeight="Bold" FontSize="12" Foreground="#ECECEC" Margin="0,0,0,5"/>
+                    
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                        <ListBox x:Name="AudioLayersListBox" Background="#1E1E1E" BorderThickness="1" BorderBrush="#333333" CornerRadius="0" Padding="0">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="2,2,0,2"/>
+                                    <Setter Property="VerticalAlignment" Value="Top"/>
+                                </Style>
+                            </ListBox.Styles>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="0"/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="core:AudioLayer">
+                                    <Border BorderThickness="0,0,1,0" BorderBrush="#333333" Width="95" Background="Transparent">
+                                        <Grid RowDefinitions="Auto, Auto, Auto, *, Auto">
+                                            
+                                            <!-- Row 0: Active Bar -->
+                                            <Border Grid.Row="0" Background="#112C66" Padding="0,3">
+                                                <TextBlock Text="Active" Foreground="#5B8EEA" FontSize="10" TextAlignment="Center" FontWeight="SemiBold"/>
+                                            </Border>
+                                            
+                                            <!-- Row 1: Name and Dropdown -->
+                                            <Grid Grid.Row="1" ColumnDefinitions="*, Auto" Margin="5,5,5,2">
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis" FontSize="11" Foreground="#ECECEC" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" FontFamily="{StaticResource FontAwesome}" Text="&#xf0d7;" Foreground="#ECECEC" FontSize="10" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                            </Grid>
+                                            
+                                            <!-- Row 2: dB Value -->
+                                            <TextBlock Grid.Row="2" Text="{Binding Volume, StringFormat=\{0:0.0\} dB}" FontSize="11" Foreground="#888888" Margin="5,0,5,10"/>
+                                            
+                                            <!-- Row 3: Sliders and Meters -->
+                                            <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, Auto" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                                <!-- Slider -->
+                                                <Slider Grid.Column="0" Orientation="Vertical" Value="{Binding Volume}" Minimum="0" Maximum="1" Height="140" HorizontalAlignment="Left" Margin="0,0,5,0" />
+                                                
+                                                <!-- Stereo Meters -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                                    <ProgressBar Orientation="Vertical" Minimum="0" Maximum="1" Value="{Binding CurrentPeak}" Width="6" CornerRadius="0" BorderThickness="0" Background="#111111">
+                                                        <ProgressBar.Foreground>
+                                                            <LinearGradientBrush StartPoint="0%,100%" EndPoint="0%,0%">
+                                                                <GradientStop Color="#28A745" Offset="0.0" />
+                                                                <GradientStop Color="#28A745" Offset="0.6" />
+                                                                <GradientStop Color="#FFC107" Offset="0.75" />
+                                                                <GradientStop Color="#DC3545" Offset="0.9" />
+                                                            </LinearGradientBrush>
+                                                        </ProgressBar.Foreground>
+                                                    </ProgressBar>
+                                                    <ProgressBar Orientation="Vertical" Minimum="0" Maximum="1" Value="{Binding CurrentPeak}" Width="6" CornerRadius="0" BorderThickness="0" Background="#111111">
+                                                        <ProgressBar.Foreground>
+                                                            <LinearGradientBrush StartPoint="0%,100%" EndPoint="0%,0%">
+                                                                <GradientStop Color="#28A745" Offset="0.0" />
+                                                                <GradientStop Color="#28A745" Offset="0.6" />
+                                                                <GradientStop Color="#FFC107" Offset="0.75" />
+                                                                <GradientStop Color="#DC3545" Offset="0.9" />
+                                                            </LinearGradientBrush>
+                                                        </ProgressBar.Foreground>
+                                                    </ProgressBar>
+                                                </StackPanel>
+                                                
+                                                <!-- Tick Marks -->
+                                                <Grid Grid.Column="2" RowDefinitions="*,*,*,*,*,*,*,*,*,*,*" Margin="4,0,0,0">
+                                                    <TextBlock Grid.Row="0" Text="- 0" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="1" Text="- 6" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="2" Text="- 12" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="3" Text="- 18" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="4" Text="- 24" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="5" Text="- 30" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="6" Text="- 36" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="7" Text="- 42" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="8" Text="- 48" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="9" Text="- 54" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="10" Text="- 60" FontSize="8" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Grid>
+                                            
+                                            <!-- Row 4: Bottom Icons -->
+                                            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15" Margin="0,0,0,10">
+                                                <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf028;" Foreground="#ECECEC" FontSize="14" VerticalAlignment="Center"/>
+                                                <TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf013;" Foreground="#ECECEC" FontSize="14" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2" Background="#2B2B2B" BorderThickness="1,0,1,1" BorderBrush="#333333" Height="26" Margin="0">
+                        <Grid ColumnDefinitions="Auto, Auto, *">
+                            <Button Grid.Column="0" Content="+" x:Name="AddAudioLayerButton" Click="AddAudioLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Add Audio Source"/>
+                            <Button Grid.Column="1" Content="-" x:Name="RemoveAudioLayerButton" Click="RemoveAudioLayerButton_Click" Background="Transparent" Foreground="#ECECEC" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Remove Audio Source"/>
+                            
+                            <ComboBox Grid.Column="2" x:Name="AddAudioLayerTypeComboBox" SelectedIndex="0" Height="20" FontSize="10" VerticalAlignment="Center" Margin="5,0" Padding="5,0" MinHeight="20" HorizontalAlignment="Right">
+                                <ComboBoxItem Content="Microphone" />
+                                <ComboBoxItem Content="System Audio" />
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Dock 3: Settings -->
+            <Border Grid.Row="1" Grid.Column="2" Background="#252526" BorderBrush="#333333" BorderThickness="1" Margin="0" Padding="5">
+                <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+
+                        <StackPanel Grid.Row="1">
+                            <TextBlock Text="Hardware Encoder" FontWeight="SemiBold" FontSize="12" Foreground="#AAAAAA" Margin="0,5,0,0"/>
+                            <ComboBox x:Name="GpuComboBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="GpuComboBox_SelectionChanged">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="core:GPUDevice">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" x:Name="GpuWarningPanel" Orientation="Horizontal" Spacing="5" Margin="0,2,0,0" IsVisible="False">
+                                <TextBlock Text="⚠" Foreground="#FFCC00" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <TextBlock Text="Cross-adapter encoding warning." Foreground="#FFCC00" TextWrapping="Wrap" FontSize="10" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3">
+                            <CheckBox x:Name="HardwareAccelerationCheckBox" Content="Use HW Acceleration" IsChecked="True" Foreground="#AAAAAA" FontSize="12" Margin="0,2,0,0"/>
+
+                            <TextBlock Text="Save Location" FontWeight="SemiBold" FontSize="12" Foreground="#AAAAAA" Margin="0,5,0,0"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox x:Name="SaveLocationTextBox" Grid.Column="0" IsReadOnly="True" Margin="0,0,5,0" VerticalAlignment="Center" Height="28" FontSize="11" Padding="5,4"/>
+                                <Button x:Name="SelectFolderButton" Grid.Column="1" Content="..." Click="SelectFolder_Click" Classes="accent" VerticalAlignment="Center" Height="28" Width="32" Padding="0" HorizontalContentAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+            </Border> 
         </Grid>
-    </Grid>
-        
-    <!-- Bottom Info Bar -->
-        <Border VerticalAlignment="Bottom" Background="#111111" Padding="15,4" BorderBrush="#222222" BorderThickness="0,1,0,0" Height="28">
+
+        <Border Grid.Row="3" Background="#111111" Padding="15,4" BorderBrush="#222222" BorderThickness="0,1,0,0" Height="28">
             <Grid ColumnDefinitions="*,*">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" Spacing="15">
                     <TextBlock x:Name="AppVersionText" Text="Zenith v1.0.0" FontSize="12" Foreground="#888888" VerticalAlignment="Center"/>
@@ -205,5 +348,5 @@
                 </StackPanel>
             </Grid>
         </Border>
-    </Panel>
+    </Grid>
 </Window>

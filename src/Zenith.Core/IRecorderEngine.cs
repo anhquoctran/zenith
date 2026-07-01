@@ -32,15 +32,10 @@ public class RecordingConfig
     public int Height { get; set; } = 1080;
     public int Framerate { get; set; } = 30;
     
-    // X, Y, Width, Height (null = full screen)
-    public System.Drawing.Rectangle? CaptureRegion { get; set; } = null;
-    public bool EnableWebcam { get; set; } = false;
-    public string WebcamDeviceName { get; set; } = string.Empty;
+    // Layers
+    public System.Collections.Generic.List<VideoLayer> VideoLayers { get; set; } = new();
+    public System.Collections.Generic.List<AudioLayer> AudioLayers { get; set; } = new();
     
-    /// <summary>
-    /// The HMONITOR handle for the target monitor. If IntPtr.Zero, defaults to primary.
-    /// </summary>
-    public IntPtr MonitorHandle { get; set; } = IntPtr.Zero;
     public bool UseHardwareAcceleration { get; set; } = false;
     public string SelectedGpuId { get; set; } = "Auto";
 }

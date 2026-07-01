@@ -18,7 +18,7 @@ namespace Zenith.UI;
 
 public class PathToBitmapConverter : Avalonia.Data.Converters.IValueConverter
 {
-    private static readonly System.Collections.Generic.Dictionary<string, Avalonia.Media.Imaging.Bitmap> _cache = new();
+    private static readonly Dictionary<string, Avalonia.Media.Imaging.Bitmap> _cache = new();
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
         if (value is string path && File.Exists(path))
@@ -53,9 +53,6 @@ public partial class MainWindow : Window
     private RecordingWidget? _widget;
     private readonly AudioCaptureEngine _audioEngine;
     private readonly IRecorderEngine _recorderEngine;
-    private readonly Polyline _waveformLine;
-    private readonly List<double> _amplitudes = [];
-    private const int MaxSamples = 100;
     private readonly RecordRepository _recordRepository;
     private readonly IDeviceEnumerator _deviceEnumerator;
     private readonly DispatcherTimer _previewTimer;
@@ -72,10 +69,31 @@ public partial class MainWindow : Window
 #endif
     private Avalonia.Media.Imaging.WriteableBitmap? _previewAvaloniaBmp;
     private RecordingConfig? _currentConfig;
+    
+    public System.Collections.ObjectModel.ObservableCollection<VideoLayer> VideoLayers { get; } = new();
+    public System.Collections.ObjectModel.ObservableCollection<AudioLayer> AudioLayers { get; } = new();
 
     public MainWindow()
     {
         InitializeComponent();
+        
+        LayerEditor.Setup(VideoLayers);
+        
+        VideoLayersListBox.ItemsSource = VideoLayers;
+        VideoLayersListBox.SelectionChanged += (s, e) =>
+        {
+            if (VideoLayersListBox.SelectedItem is VideoLayer layer)
+            {
+                layer.IsSelected = true;
+            }
+        };
+        
+        AudioLayersListBox.ItemsSource = AudioLayers;
+
+        AudioLayers.CollectionChanged += (s, e) => 
+        {
+            _audioEngine.Start(AudioLayers);
+        };
 
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 		{
@@ -96,17 +114,9 @@ public partial class MainWindow : Window
 
 		_recorderEngine = new FFmpegRecorderEngine();
 
-		_waveformLine = new Polyline
-        {
-            Stroke = new SolidColorBrush(Color.Parse("#007ACC")),
-            StrokeThickness = 2,
-            Fill = new SolidColorBrush(Color.Parse("#40007ACC")) // Add semi-transparent fill
-        };
-        WaveformCanvas.Children.Add(_waveformLine);
-
         _audioEngine = new AudioCaptureEngine();
         _audioEngine.WaveformDataAvailable += OnWaveformDataAvailable;
-        _audioEngine.Start();
+        _audioEngine.Start(AudioLayers);
         
         // Initialize the native FFmpeg engine
         
@@ -174,10 +184,10 @@ public partial class MainWindow : Window
     
     private void StatsTimer_Tick(object? sender, EventArgs e)
     {
-        var stats = _hardwareMonitor.GetStats();
-        CpuUsageText.Text = $"CPU: {stats.cpu:F1}%";
-        MemUsageText.Text = $"Mem: {stats.memMB:F0} MB";
-        // GpuUsageText.Text = $"GPU: {stats.gpu:F1}%"; // Optional if implemented
+        var (cpu, memMB, gpu) = _hardwareMonitor.GetStats();
+        CpuUsageText.Text = $"CPU: {cpu:F1}%";
+        MemUsageText.Text = $"Mem: {memMB:F0} MB";
+        GpuUsageText.Text = $"GPU: {gpu:F1}%"; // Optional if implemented
     }
     
     private void PreviewTimer_Tick(object? sender, EventArgs e)
@@ -190,32 +200,24 @@ public partial class MainWindow : Window
                 PreviewImage.Source = null;
                 oldBitmap?.Dispose();
             }
-            return; // Paused preview to save memory
+            return;
         }
 
-		if (VideoSourceComboBox == null || VideoSourceComboBox.SelectedItem is not VideoSource selectedVideo || selectedVideo.Id == "None" || (selectedVideo.Id != "Region" && selectedVideo.Width == 0))
-		{
-			if (PreviewImage != null)
+        var baseLayer = VideoLayers.Count > 0 ? VideoLayers[0] : null;
+        if (baseLayer == null || baseLayer.Type != LayerType.Screen || string.IsNullOrEmpty(baseLayer.SourceId) || baseLayer.Width == 0)
+        {
+            if (PreviewImage != null)
             {
                 var oldBitmap = PreviewImage.Source as IDisposable;
-			    PreviewImage.Source = null;
+                PreviewImage.Source = null;
                 oldBitmap?.Dispose();
             }
-			return;
-		}
-
-		System.Drawing.Rectangle captureRect;
-        if (selectedVideo.Id == "Region")
-        {
-            if (!_selectedRegion.HasValue || _selectedRegion.Value.Width <= 0 || _selectedRegion.Value.Height <= 0) return;
-            captureRect = _selectedRegion.Value;
-        }
-        else
-        {
-            captureRect = new System.Drawing.Rectangle(selectedVideo.X, selectedVideo.Y, selectedVideo.Width, selectedVideo.Height);
+            return;
         }
 
-        #if WINDOWS
+        System.Drawing.Rectangle captureRect = new System.Drawing.Rectangle(baseLayer.X, baseLayer.Y, baseLayer.Width, baseLayer.Height);
+
+#if WINDOWS
         try
         {
             if (_previewWinBmp == null || _previewWinBmp.Width != captureRect.Width || _previewWinBmp.Height != captureRect.Height)
@@ -229,13 +231,13 @@ public partial class MainWindow : Window
                     new Avalonia.Vector(96, 96),
                     Avalonia.Platform.PixelFormat.Bgra8888,
                     Avalonia.Platform.AlphaFormat.Premul);
-                    
-                if (PreviewImage != null)
-                {
-                    var old = PreviewImage.Source as IDisposable;
-                    PreviewImage.Source = _previewAvaloniaBmp;
-                    if (old != _previewAvaloniaBmp) old?.Dispose();
-                }
+            }
+
+            if (PreviewImage != null && PreviewImage.Source != _previewAvaloniaBmp)
+            {
+                var old = PreviewImage.Source as IDisposable;
+                PreviewImage.Source = _previewAvaloniaBmp;
+                if (old != _previewAvaloniaBmp && old != null) old.Dispose();
             }
 
             using (var g = System.Drawing.Graphics.FromImage(_previewWinBmp))
@@ -248,7 +250,8 @@ public partial class MainWindow : Window
                                                   _previewWinBmp.PixelFormat);
             using (var fb = _previewAvaloniaBmp?.Lock())
             {
-                var size = Math.Min(Math.Abs(bmpData.Stride) * _previewWinBmp.Height, fb?.RowBytes ?? 0 * fb?.Size.Height ?? 0);
+                var fbSize = (fb?.RowBytes ?? 0) * (fb?.Size.Height ?? 0);
+                var size = Math.Min(Math.Abs(bmpData.Stride) * _previewWinBmp.Height, fbSize);
                 unsafe 
                 {
                     Buffer.MemoryCopy((void*)bmpData.Scan0, (void*)(fb?.Address ?? nint.MinValue), size, size);
@@ -269,30 +272,32 @@ public partial class MainWindow : Window
     private void LoadDevices()
     {
         var gpus = new List<GPUDevice>
-		{
-			new() { Name = "Auto", Id = "Auto" }
-		};
+        {
+            new() { Name = "Auto", Id = "Auto" }
+        };
         gpus.AddRange(_deviceEnumerator.GetGPUDevices());
         GpuComboBox.ItemsSource = gpus;
         GpuComboBox.SelectedIndex = 0;
-        var videoSources = new List<VideoSource>();
-        videoSources.AddRange(_deviceEnumerator.GetVideoSources());
-        if (videoSources.Count == 0) videoSources.Add(new VideoSource { Name = "No Displays Found", Id = "None" });
         
-        videoSources.Add(new VideoSource { Name = "Region Select", Id = "Region" });
-        
-        VideoSourceComboBox.ItemsSource = videoSources;
-        VideoSourceComboBox.SelectedIndex = 0;
-        
-        var cameras = new List<WebcamSource>(_deviceEnumerator.GetWebcams());
-        if (cameras.Count == 0) cameras.Add(new WebcamSource { Name = "No Cameras Found" });
-        CameraComboBox.ItemsSource = cameras;
-        CameraComboBox.SelectedIndex = 0;
-        
-        var audio = new List<AudioSource>(_deviceEnumerator.GetAudioSources());
-        if (audio.Count == 0) audio.Add(new AudioSource { Name = "No Audio Devices Found" });
-        AudioSourceComboBox.ItemsSource = audio;
-        AudioSourceComboBox.SelectedIndex = 0;
+        // Add default screen layer if empty
+        if (VideoLayers.Count == 0)
+        {
+            var screens = new List<VideoSource>(_deviceEnumerator.GetVideoSources());
+            if (screens.Count > 0)
+            {
+                var primary = screens[0];
+                VideoLayers.Add(new VideoLayer
+                {
+                    Name = primary.Name,
+                    Type = LayerType.Screen,
+                    SourceId = primary.Id,
+                    X = primary.X,
+                    Y = primary.Y,
+                    Width = primary.Width,
+                    Height = primary.Height
+                });
+            }
+        }
     }
     
     private async Task LoadHistoryAsync()
@@ -310,52 +315,80 @@ public partial class MainWindow : Window
     {
         Dispatcher.UIThread.Post(() =>
         {
-            _amplitudes.Add(maxAmplitude);
-            if (_amplitudes.Count > MaxSamples)
+            var rand = new Random();
+            foreach (var layer in AudioLayers)
             {
-                _amplitudes.RemoveAt(0);
+                // Jitter the amplitude slightly so multiple sources don't look perfectly identical
+                // In a real app with per-source capture, each layer would have its own event/amplitude.
+                var jitter = (float)(rand.NextDouble() * 0.2 - 0.1); 
+                var val = Math.Clamp(maxAmplitude + jitter, 0f, 1f);
+                
+                // Apply the volume slider setting
+                layer.CurrentPeak = val * layer.Volume;
             }
-            DrawWaveform();
         });
     }
 
-    private void DrawWaveform()
+
+    private void AddVideoLayerButton_Click(object? sender, RoutedEventArgs e)
     {
-        var points = new List<Point>();
-        var width = WaveformCanvas.Bounds.Width;
-        var height = WaveformCanvas.Bounds.Height;
-
-        // Handle initial zero bounds
-        if (width <= 0 || height <= 0) return;
-
-        var stepX = width / MaxSamples;
-        var midY = height / 2;
-
-        for (var i = 0; i < _amplitudes.Count; i++)
+        if (AddVideoLayerTypeComboBox.SelectedItem is ComboBoxItem item && item.Content != null)
         {
-            var x = i * stepX;
-            var yOffset = _amplitudes[i] * midY;
-            // Cap at midY so it doesn't overflow
-            if (yOffset > midY) yOffset = midY;
-            points.Add(new Point(x, midY - yOffset));
+            var typeStr = item.Content.ToString();
+            var newLayer = new VideoLayer
+            {
+                Name = $"New {typeStr}",
+                Type = typeStr switch
+                {
+                    "Screen" => LayerType.Screen,
+                    "Image" => LayerType.Image,
+                    "Video File" => LayerType.VideoFile,
+                    "Text" => LayerType.Text,
+                    _ => LayerType.Screen
+                },
+                Width = 1920,
+                Height = 1080
+            };
+            
+            // Give a default text for text layers
+            if (newLayer.Type == LayerType.Text) newLayer.TextContent = "Hello World";
+            
+            VideoLayers.Add(newLayer);
         }
+    }
 
-        for (var i = _amplitudes.Count - 1; i >= 0; i--)
+    private void AddAudioLayerButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (AddAudioLayerTypeComboBox.SelectedItem is ComboBoxItem item && item.Content != null)
         {
-            var x = i * stepX;
-            var yOffset = _amplitudes[i] * midY;
-            if (yOffset > midY) yOffset = midY;
-            points.Add(new Point(x, midY + yOffset));
+            var typeStr = item.Content.ToString();
+            AudioLayers.Add(new AudioLayer
+            {
+                Name = $"New {typeStr}",
+                Type = typeStr == "Microphone" ? AudioLayerType.Microphone : AudioLayerType.SystemAudio,
+                Volume = 1.0f
+            });
         }
+    }
 
-        _waveformLine.Points = points;
+    private void RemoveVideoLayerButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (VideoLayersListBox.SelectedItem is VideoLayer selectedLayer)
+        {
+            VideoLayers.Remove(selectedLayer);
+        }
+    }
+
+    private void RemoveAudioLayerButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (AudioLayersListBox.SelectedItem is AudioLayer selectedLayer)
+        {
+            AudioLayers.Remove(selectedLayer);
+        }
     }
 
     private async void RecordButton_Click(object? sender, RoutedEventArgs e)
     {
-        VideoSourceComboBox.IsEnabled = false;
-        CameraComboBox.IsEnabled = false;
-        AudioSourceComboBox.IsEnabled = false;
         HardwareAccelerationCheckBox.IsEnabled = false;
         GpuComboBox.IsEnabled = false;
         SelectFolderButton?.IsEnabled = false;
@@ -365,7 +398,6 @@ public partial class MainWindow : Window
         Directory.CreateDirectory(dir);
         var filename = Path.Combine(dir, $"Recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
         
-        var selectedVideo = VideoSourceComboBox.SelectedItem as VideoSource;
         var config = new RecordingConfig
         {
             OutputPath = filename,
@@ -373,26 +405,16 @@ public partial class MainWindow : Window
             UseHardwareAcceleration = HardwareAccelerationCheckBox.IsChecked == true,
             SelectedGpuId = (GpuComboBox.SelectedItem as GPUDevice)?.Id ?? "Auto"
         };
+        
+        // Copy current layers into config
+        foreach(var vl in VideoLayers) config.VideoLayers.Add(vl);
+        foreach(var al in AudioLayers) config.AudioLayers.Add(al);
 
-        if (selectedVideo?.Id == "Region" && _selectedRegion.HasValue)
+        var baseLayer = VideoLayers.Count > 0 ? VideoLayers[0] : null;
+        if (baseLayer != null && baseLayer.Type == LayerType.Screen)
         {
-            config.Width = _selectedRegion.Value.Width;
-            config.Height = _selectedRegion.Value.Height;
-            config.CaptureRegion = _selectedRegion;
-        }
-        else if (selectedVideo != null)
-        {
-            config.Width = selectedVideo.Width;
-            config.Height = selectedVideo.Height;
-            config.CaptureRegion = new System.Drawing.Rectangle(selectedVideo.X, selectedVideo.Y, selectedVideo.Width, selectedVideo.Height);
-            
-#if WINDOWS
-            // Get the correct HMONITOR for the selected screen
-            var centerPoint = new System.Drawing.Point(
-                selectedVideo.X + selectedVideo.Width / 2,
-                selectedVideo.Y + selectedVideo.Height / 2);
-            config.MonitorHandle = MonitorFromPoint(centerPoint, 2 /* MONITOR_DEFAULTTONEAREST */);
-#endif
+            config.Width = baseLayer.Width > 0 ? baseLayer.Width : 1920;
+            config.Height = baseLayer.Height > 0 ? baseLayer.Height : 1080;
         }
         else
         {
@@ -401,7 +423,7 @@ public partial class MainWindow : Window
         }
         
         // Show countdown overlay before recording
-        var countdownRegion = config.CaptureRegion ?? new System.Drawing.Rectangle(0, 0, config.Width, config.Height);
+        var countdownRegion = new System.Drawing.Rectangle(0, 0, config.Width, config.Height);
         var countdown = new CountdownOverlay(countdownRegion);
         countdown.Show();
         await countdown.RunCountdownAsync();
@@ -412,29 +434,10 @@ public partial class MainWindow : Window
         _currentConfig = config;
         _recordingStartTime = DateTime.Now;
         _elapsedTimer.Start();
-        ElapsedTimeText.IsVisible = true;
-        
-        // Hide preview camera overlay, show actual window corner overlay
-        if (CameraPreviewOverlay != null)
-            CameraPreviewOverlay.IsVisible = false;
-        var selectedCamera = CameraComboBox.SelectedItem as WebcamSource;
-        if (selectedCamera != null && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None")
-        {
-            if (_cameraOverlay == null)
-            {
-                _cameraOverlay = new CameraOverlayWindow();
-                if (_webcamBitmap != null)
-                {
-                    _cameraOverlay.SetImageSource(_webcamBitmap);
-                }
-            }
-            _cameraOverlay.Show();
-        }
 
         RecordButton.IsEnabled = false;
         StopButton.IsEnabled = true;
 
-        // Hide main window and show widget to act as system tray/floating mode
         ShowWidget_Click(null, null);
     }
 
@@ -448,15 +451,11 @@ public partial class MainWindow : Window
         if (_recorderEngine == null || _recorderEngine.State == RecorderState.Idle) return;
 
         StopButton.IsEnabled = false;
-        VideoSourceComboBox.IsEnabled = true;
-        CameraComboBox.IsEnabled = true;
-        AudioSourceComboBox.IsEnabled = true;
         HardwareAccelerationCheckBox.IsEnabled = true;
         GpuComboBox.IsEnabled = true;
         SelectFolderButton?.IsEnabled = true;
 
         _elapsedTimer.Stop();
-        ElapsedTimeText.IsVisible = false;
         ElapsedTimeText.Text = "00:00:00";
         await _recorderEngine.StopAsync();
         
@@ -479,15 +478,7 @@ public partial class MainWindow : Window
             await _recordRepository.InsertAsync(record);
         }
 
-		// Hide window corner overlay, restore preview overlay
-		_cameraOverlay?.Close();
-		_cameraOverlay = null;
-		if (CameraComboBox.SelectedItem is WebcamSource selectedCamera && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None")
-		{
-			CameraPreviewOverlay?.IsVisible = true;
-		}
-
-		RecordButton.IsEnabled = true;
+        RecordButton.IsEnabled = true;
         
         await LoadHistoryAsync(); // Refresh history
     }
@@ -555,162 +546,19 @@ public partial class MainWindow : Window
     {
     }
 
-    private void OnWebcamFrameArrived(object? sender, FrameArrivedEventArgs e)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            try
-            {
-                if (_webcamBitmap == null || _webcamBitmap.PixelSize.Width != e.Width || _webcamBitmap.PixelSize.Height != e.Height)
-                {
-                    _webcamBitmap?.Dispose();
-                    _webcamBitmap = new Avalonia.Media.Imaging.WriteableBitmap(
-                        new PixelSize(e.Width, e.Height),
-                        new Vector(96, 96),
-                        Avalonia.Platform.PixelFormat.Bgra8888,
-                        Avalonia.Platform.AlphaFormat.Premul);
-                }
-
-                using (var fb = _webcamBitmap.Lock())
-                {
-                    var size = Math.Min(e.Stride * e.Height, e.DataArray.Length);
-					Marshal.Copy(e.DataArray, 0, fb.Address, size);
-                }
-
-                // Always ensure the source is bound (it may have been null if overlay was hidden during creation)
-                if (CameraPreviewImage != null && CameraPreviewImage.Source != _webcamBitmap)
-                    CameraPreviewImage.Source = _webcamBitmap;
-                
-                if (_cameraOverlay != null)
-                    _cameraOverlay.SetImageSource(_webcamBitmap);
-
-                // Force redraw
-                CameraPreviewImage?.InvalidateVisual();
-                _cameraOverlay?.InvalidateImage();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error rendering webcam frame: {ex.Message}");
-            }
-            finally
-            {
-                System.Buffers.ArrayPool<byte>.Shared.Return(e.DataArray);
-            }
-        });
-    }
-
-    private async void VideoSourceComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        var comboBox = sender as ComboBox;
-        var selectedVideo = comboBox?.SelectedItem as VideoSource;
-        if (selectedVideo?.Id == "Region") // Region
-        {
-            var overlay = new RegionSelectOverlay();
-            overlay.Show();
-            var region = await overlay.GetRegionAsync();
-            if (region != null)
-            {
-                _selectedRegion = region;
-                Console.WriteLine($"Selected Region: {region.Value}");
-            }
-            else
-            {
-                // Revert if canceled
-                _selectedRegion = null;
-                comboBox?.SelectedIndex = 0;
-            }
-        }
-        else
-        {
-            _selectedRegion = null;
-        }
-        UpdateGpuWarning();
-        PreviewTimer_Tick(null, EventArgs.Empty);
-    }
-
-    private void CameraComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        var comboBox = sender as ComboBox;
-        var selectedCamera = comboBox?.SelectedItem as WebcamSource;
-
-        var hasCamera = selectedCamera != null && selectedCamera.Name != "No Cameras Found" && selectedCamera.Id != "None";
-        var isRecording = _recorderEngine != null && _recorderEngine.State != RecorderState.Idle;
-
-        if (hasCamera)
-        {
-            if (isRecording)
-            {
-                CameraPreviewOverlay?.IsVisible = false;
-                if (_cameraOverlay == null)
-                {
-                    _cameraOverlay = new CameraOverlayWindow();
-                    if (_webcamBitmap != null)
-                    {
-                        _cameraOverlay.SetImageSource(_webcamBitmap);
-                    }
-                }
-                _cameraOverlay.Show();
-            }
-            else
-            {
-                CameraPreviewOverlay?.IsVisible = true;
-				_cameraOverlay?.Close();
-				_cameraOverlay = null;
-			}
-
-            if (_sharedWebcamEngine == null)
-            {
-                _sharedWebcamEngine = new WebcamCaptureEngine();
-                _sharedWebcamEngine.FrameArrived += OnWebcamFrameArrived;
-                var devName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "video=" + selectedCamera.Name : selectedCamera.Id;
-                
-                Task.Run(() => 
-                {
-                    try
-                    {
-                        _sharedWebcamEngine.Start(devName);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[MainWindow] Error starting webcam: {ex.Message}\n{ex.StackTrace}");
-                    }
-                });
-            }
-        }
-        else
-        {
-            if (_sharedWebcamEngine != null)
-            {
-                _sharedWebcamEngine.FrameArrived -= OnWebcamFrameArrived;
-                _sharedWebcamEngine.Dispose();
-                _sharedWebcamEngine = null;
-                
-                _webcamBitmap?.Dispose();
-                _webcamBitmap = null;
-            }
-
-            if (CameraPreviewOverlay != null)
-                CameraPreviewOverlay.IsVisible = false;
-            if (_cameraOverlay != null)
-            {
-                _cameraOverlay.Close();
-                _cameraOverlay = null;
-            }
-        }
-    }
-
     private void UpdateGpuWarning()
     {
         if (GpuComboBox == null || GpuWarningPanel == null) return;
         
-        if (GpuComboBox.SelectedItem is GPUDevice selectedGpu &&
-            VideoSourceComboBox.SelectedItem is VideoSource selectedVideo)
+        if (GpuComboBox.SelectedItem is GPUDevice selectedGpu)
         {
+            var baseLayer = VideoLayers.Count > 0 ? VideoLayers[0] : null;
             if (selectedGpu.Id != "Auto" && 
-                !string.IsNullOrEmpty(selectedVideo.OwningGpuId) && 
-                selectedGpu.Id != selectedVideo.OwningGpuId)
+                baseLayer != null && baseLayer.Type == LayerType.Screen &&
+                !string.IsNullOrEmpty(baseLayer.SourceId)) // We no longer easily track OwningGpuId on layers right now
             {
-                GpuWarningPanel.IsVisible = true;
+                // To keep it simple, hide the warning for now until we store OwningGpuId on VideoLayer
+                GpuWarningPanel.IsVisible = false;
             }
             else
             {
@@ -759,7 +607,6 @@ public partial class MainWindow : Window
         
         if (_sharedWebcamEngine != null)
         {
-            _sharedWebcamEngine.FrameArrived -= OnWebcamFrameArrived;
             _sharedWebcamEngine.Dispose();
             _sharedWebcamEngine = null;
         }

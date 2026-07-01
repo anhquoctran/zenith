@@ -1,94 +1,139 @@
 using System;
+using System.Collections.Generic;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
+using Zenith.Core;
 
 namespace Zenith.Interop;
 
 public class AudioCaptureEngine : IDisposable
 {
-    private WasapiLoopbackCapture? _systemAudioCapture;
-    private WasapiCapture? _micCapture;
-
     public event EventHandler<float>? WaveformDataAvailable;
+    
+    // We will raise this event when a mixed chunk of PCM float data is ready
+    public event EventHandler<float[]>? AudioBufferReady;
 
-    public void Start()
+    private readonly List<WasapiCapture> _captures = new();
+    private MixingSampleProvider? _mixer;
+    private readonly WaveFormat _targetFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
+    private readonly Dictionary<WasapiCapture, ISampleProvider> _resamplers = new();
+
+    public void Start(IEnumerable<AudioLayer> layers)
     {
-        try
-        {
-            _systemAudioCapture = new WasapiLoopbackCapture();
-            _systemAudioCapture.DataAvailable += OnDataAvailable;
-            _systemAudioCapture.StartRecording();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"System Audio Capture Error: {ex.Message}");
-        }
+        Stop();
+        
+        _mixer = new MixingSampleProvider(_targetFormat);
 
-        try
+        foreach (var layer in layers)
         {
-            _micCapture = new WasapiCapture();
-            _micCapture.DataAvailable += OnDataAvailable;
-            _micCapture.StartRecording();
+            try
+            {
+                WasapiCapture capture;
+                if (layer.Type == AudioLayerType.SystemAudio)
+                {
+                    capture = new WasapiLoopbackCapture();
+                }
+                else
+                {
+                    capture = new WasapiCapture();
+                }
+
+                var bufferedProvider = new BufferedWaveProvider(capture.WaveFormat)
+                {
+                    ReadFully = false,
+                    DiscardOnBufferOverflow = true
+                };
+
+                // Convert to SampleProvider
+                ISampleProvider sampleProvider = capture.WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat 
+                    ? new WaveToSampleProvider(bufferedProvider) 
+                    : new Pcm16BitToSampleProvider(bufferedProvider);
+                
+                // Resample to target format if needed
+                if (capture.WaveFormat.SampleRate != _targetFormat.SampleRate || capture.WaveFormat.Channels != _targetFormat.Channels)
+                {
+                    var resampler = new MediaFoundationResampler(bufferedProvider, _targetFormat);
+                    sampleProvider = new WaveToSampleProvider(resampler);
+                }
+
+                // Add volume control
+                var volumeProvider = new VolumeSampleProvider(sampleProvider) { Volume = layer.Volume };
+
+                _captures.Add(capture);
+                _resamplers[capture] = volumeProvider;
+                _mixer.AddMixerInput(volumeProvider);
+
+                capture.DataAvailable += (s, e) =>
+                {
+                    if (e.BytesRecorded > 0)
+                    {
+                        bufferedProvider.AddSamples(e.Buffer, 0, e.BytesRecorded);
+                    }
+                };
+
+                capture.StartRecording();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to start audio layer {layer.Name}: {ex.Message}");
+            }
         }
-        catch (Exception ex)
+        
+        // Start a background thread to pull from mixer and emit events
+        System.Threading.Tasks.Task.Run(MixerLoop);
+    }
+
+    private void MixerLoop()
+    {
+        var buffer = new float[4096];
+        while (_mixer != null)
         {
-            Console.WriteLine($"Microphone Capture Error: {ex.Message}");
+            try
+            {
+                int read = _mixer.Read(buffer, 0, buffer.Length);
+                if (read > 0)
+                {
+                    float maxAmp = 0;
+                    for (int i = 0; i < read; i++)
+                    {
+                        var abs = Math.Abs(buffer[i]);
+                        if (abs > maxAmp) maxAmp = abs;
+                    }
+
+                    WaveformDataAvailable?.Invoke(this, maxAmp);
+                    
+                    var outBuffer = new float[read];
+                    Array.Copy(buffer, outBuffer, read);
+                    AudioBufferReady?.Invoke(this, outBuffer);
+                }
+                else
+                {
+                    System.Threading.Thread.Sleep(10);
+                }
+            }
+            catch
+            {
+                break;
+            }
         }
     }
 
     public void Stop()
     {
-        _systemAudioCapture?.StopRecording();
-        _micCapture?.StopRecording();
-    }
+        _mixer = null; // Stops the loop
 
-    private void OnDataAvailable(object? sender, WaveInEventArgs e)
-    {
-        if (e.BytesRecorded == 0) return;
-
-        var capture = sender as WasapiCapture;
-        if (capture == null) return;
-
-        float maxAmplitude = 0;
-
-        if (capture.WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
+        foreach (var capture in _captures)
         {
-            for (var i = 0; i < e.BytesRecorded; i += 4)
-            {
-                var sample = BitConverter.ToSingle(e.Buffer, i);
-                var abs = Math.Abs(sample);
-                if (abs > maxAmplitude) maxAmplitude = abs;
-            }
+            capture.StopRecording();
+            capture.Dispose();
         }
-        else if (capture.WaveFormat.Encoding == WaveFormatEncoding.Pcm && capture.WaveFormat.BitsPerSample == 16)
-        {
-            for (var i = 0; i < e.BytesRecorded; i += 2)
-            {
-                var sample = BitConverter.ToInt16(e.Buffer, i);
-                var abs = Math.Abs((float)sample / 32768f);
-                if (abs > maxAmplitude) maxAmplitude = abs;
-            }
-        }
-
-        // Note: NAudio fires DataAvailable often enough. We fire this event to push to UI.
-        // We will throttle UI updates in the UI layer.
-        WaveformDataAvailable?.Invoke(this, maxAmplitude);
+        _captures.Clear();
+        _resamplers.Clear();
     }
 
     public void Dispose()
     {
         Stop();
-
-        if (_systemAudioCapture != null)
-        {
-            _systemAudioCapture.DataAvailable -= OnDataAvailable;
-            _systemAudioCapture.Dispose();
-        }
-
-        if (_micCapture != null)
-        {
-            _micCapture.DataAvailable -= OnDataAvailable;
-            _micCapture.Dispose();
-        }
     }
 }

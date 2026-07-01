@@ -30,33 +30,7 @@ public static unsafe class Program
 
             Console.WriteLine("DBus ScreenCast portal connection scaffolded.");
 
-            // 2. FFmpeg HW Context for VAAPI
-            ffmpeg.RootPath = AppContext.BaseDirectory;
-            ffmpeg.avdevice_register_all();
-
-            AVBufferRef* hwDeviceCtx = null;
-            // Using VAAPI (Video Acceleration API) which is standard on Linux for DRM/X11/Wayland zero-copy
-            var ret = ffmpeg.av_hwdevice_ctx_create(&hwDeviceCtx, AVHWDeviceType.AV_HWDEVICE_TYPE_VAAPI, null, null, 0);
-
-            if (ret < 0)
-            {
-                Console.WriteLine($"Failed to create VAAPI context. Error: {ret}");
-            }
-            else
-            {
-                Console.WriteLine("FFmpeg HW Device Context (VAAPI) created.");
-            }
-
-            // 3. Simulated DMA-BUF mapping
-            // In a real scenario, we'd take the FD from PipeWire, pull out SPA buffers (DMA-BUFs),
-            // construct an AVDRMFrameDescriptor, and map it into AVFrame with format AV_PIX_FMT_DRM_PRIME.
-            // Then hw_map it to AV_PIX_FMT_VAAPI for hardware encode.
-            
-            var avFrame = ffmpeg.av_frame_alloc();
-            avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_VAAPI;
-
-            Console.WriteLine("Simulated mapping of PipeWire DMA-BUF to AVFrame (AV_PIX_FMT_VAAPI) successful.");
-            ffmpeg.av_frame_free(&avFrame);
+            RunFFmpegPoC();
         }
         catch (Exception ex)
         {
@@ -65,4 +39,36 @@ public static unsafe class Program
 
         Console.WriteLine("PoC Completed.");
     }
+
+    private static void RunFFmpegPoC()
+    {
+        // 2. FFmpeg HW Context for VAAPI
+        ffmpeg.RootPath = AppContext.BaseDirectory;
+        ffmpeg.avdevice_register_all();
+
+        AVBufferRef* hwDeviceCtx = null;
+        // Using VAAPI (Video Acceleration API) which is standard on Linux for DRM/X11/Wayland zero-copy
+        var ret = ffmpeg.av_hwdevice_ctx_create(&hwDeviceCtx, AVHWDeviceType.AV_HWDEVICE_TYPE_VAAPI, null, null, 0);
+
+        if (ret < 0)
+        {
+            Console.WriteLine($"Failed to create VAAPI context. Error: {ret}");
+        }
+        else
+        {
+            Console.WriteLine("FFmpeg HW Device Context (VAAPI) created.");
+        }
+
+        // 3. Simulated DMA-BUF mapping
+        // In a real scenario, we'd take the FD from PipeWire, pull out SPA buffers (DMA-BUFs),
+        // construct an AVDRMFrameDescriptor, and map it into AVFrame with format AV_PIX_FMT_DRM_PRIME.
+        // Then hw_map it to AV_PIX_FMT_VAAPI for hardware encode.
+        
+        var avFrame = ffmpeg.av_frame_alloc();
+        avFrame->format = (int)AVPixelFormat.AV_PIX_FMT_VAAPI;
+
+        Console.WriteLine("Simulated mapping of PipeWire DMA-BUF to AVFrame (AV_PIX_FMT_VAAPI) successful.");
+        ffmpeg.av_frame_free(&avFrame);
+    }
+
 }

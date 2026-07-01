@@ -5,7 +5,7 @@ namespace Zenith.UI.Utils;
 
 public class HardwareMonitor
 {
-    private Process _process;
+    private readonly Process _process;
     private TimeSpan _lastCpuTime;
     private DateTime _lastMonitorTime;
 
@@ -36,8 +36,8 @@ public class HardwareMonitor
 
         // PrivateMemorySize64 (Private Bytes) closely matches the Task Manager's default 'Memory' column 
         // which excludes shared memory (Shared Working Set) that WorkingSet64 includes.
-        double memMB = _process.PrivateMemorySize64 / (1024.0 * 1024.0);
-        double gpuUsage = 0; // GPU tracking without external packages is omitted
+        var memMB = _process.PrivateMemorySize64 / (1024.0 * 1024.0);
+        var gpuUsage = 0d; // GPU tracking without external packages is omitted
 
         return (cpuUsage, memMB, gpuUsage);
     }
