@@ -198,7 +198,6 @@
     <system:String x:Key="Auto_WebcamDevice">Webカメラデバイス</system:String>
     <system:String x:Key="Auto_ZenithScreenRecorder">Zenith 画面録画</system:String>
     <system:String x:Key="Auto_ShowMainWindow">メインウィンドウを表示</system:String>
-    <system:String x:Key="Auto_StopRecording">録画停止</system:String>
     <system:String x:Key="Auto_Exit">終了</system:String>
     <system:String x:Key="Auto_BringtoFront">最前面へ移動</system:String>
     <system:String x:Key="Auto_SendtoBack">最背面へ移動</system:String>
@@ -207,9 +206,6 @@
     <system:String x:Key="Auto_FlipVertical">上下反転</system:String>
     <system:String x:Key="Auto_Delete">削除</system:String>
     <system:String x:Key="Auto_Pause">一時停止</system:String>
-    <system:String x:Key="Auto_xf04c">&amp;#xf04c;</system:String>
-    <system:String x:Key="Auto_Stop">停止</system:String>
-    <system:String x:Key="Auto_xf04d">&amp;#xf04d;</system:String>
     <system:String x:Key="Auto_Snapshot">スナップショット</system:String>
     <system:String x:Key="Auto_SelectSaveLocation">保存先を選択</system:String>
     <system:String x:Key="Auto_SystemAudioDefault">システム音声 (デフォルト)</system:String>

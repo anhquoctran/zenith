@@ -62,11 +62,11 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _previewTimer;
     private System.Drawing.Rectangle? _selectedRegion;
     private readonly DispatcherTimer _elapsedTimer;
-    private DispatcherTimer _statsTimer;
-    private Zenith.UI.Utils.HardwareMonitor _hardwareMonitor;
+    private readonly DispatcherTimer _statsTimer;
+    private readonly Utils.HardwareMonitor _hardwareMonitor;
     private DateTime _recordingStartTime;
-    private readonly System.Collections.Generic.List<LayerOverlayWindow> _activeOverlays = new();
-    private Avalonia.Media.Imaging.WriteableBitmap? _webcamBitmap;
+    private readonly List<LayerOverlayWindow> _activeOverlays = [];
+    private readonly Avalonia.Media.Imaging.WriteableBitmap? _webcamBitmap;
 #if WINDOWS
     private System.Drawing.Bitmap? _previewWinBmp;
 #endif
@@ -76,21 +76,21 @@ public partial class MainWindow : Window
     public System.Collections.ObjectModel.ObservableCollection<VideoLayer> VideoLayers { get; } = new();
     public System.Collections.ObjectModel.ObservableCollection<AudioLayer> AudioLayers { get; } = new();
 
-    private List<GPUDevice> _gpuDevices = new();
+    private List<GPUDevice> _gpuDevices = [];
     public string AppSaveLocation 
     { 
-        get => Zenith.UI.Utils.ConfigManager.CurrentConfig.SaveLocation; 
-        set => Zenith.UI.Utils.ConfigManager.CurrentConfig.SaveLocation = value; 
+        get => Utils.ConfigManager.CurrentConfig.SaveLocation; 
+        set => Utils.ConfigManager.CurrentConfig.SaveLocation = value; 
     }
     public bool AppUseHardwareAcceleration 
     { 
-        get => Zenith.UI.Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration; 
-        set => Zenith.UI.Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration = value; 
+        get => Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration; 
+        set => Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration = value; 
     }
     public string AppSelectedGpuId 
     { 
-        get => Zenith.UI.Utils.ConfigManager.CurrentConfig.SelectedGpuId; 
-        set => Zenith.UI.Utils.ConfigManager.CurrentConfig.SelectedGpuId = value; 
+        get => Utils.ConfigManager.CurrentConfig.SelectedGpuId; 
+        set => Utils.ConfigManager.CurrentConfig.SelectedGpuId = value; 
     }
     public MainWindow()
     {
@@ -190,7 +190,7 @@ public partial class MainWindow : Window
             ElapsedTimeText.Text = elapsed.ToString(@"hh\:mm\:ss");
         };
 
-        _hardwareMonitor = new Zenith.UI.Utils.HardwareMonitor();
+        _hardwareMonitor = new Utils.HardwareMonitor();
         _statsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _statsTimer.Tick += StatsTimer_Tick;
         _statsTimer.Start();
@@ -254,8 +254,8 @@ public partial class MainWindow : Window
                 
                 _previewWinBmp = new System.Drawing.Bitmap(captureRect.Width, captureRect.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 _previewAvaloniaBmp = new Avalonia.Media.Imaging.WriteableBitmap(
-                    new Avalonia.PixelSize(captureRect.Width, captureRect.Height),
-                    new Avalonia.Vector(96, 96),
+                    new PixelSize(captureRect.Width, captureRect.Height),
+                    new Vector(96, 96),
                     Avalonia.Platform.PixelFormat.Bgra8888,
                     Avalonia.Platform.AlphaFormat.Premul);
             }
@@ -414,11 +414,11 @@ public partial class MainWindow : Window
             if (newLayer.Type == LayerType.Text)
             {
                 newLayer.TextContent = "Hello World";
-                var typeface = new Avalonia.Media.Typeface(newLayer.FontFamily ?? "Arial");
-                var formattedText = new Avalonia.Media.FormattedText(
+                var typeface = new Typeface(newLayer.FontFamily ?? "Arial");
+                var formattedText = new FormattedText(
                     newLayer.TextContent,
                     System.Globalization.CultureInfo.CurrentCulture,
-                    Avalonia.Media.FlowDirection.LeftToRight,
+					FlowDirection.LeftToRight,
                     typeface,
                     newLayer.FontSize > 0 ? newLayer.FontSize : 48,
                     null);
@@ -572,7 +572,7 @@ public partial class MainWindow : Window
             if (btn.Content is TextBlock tb)
             {
                 tb.Text = layer.IsVisible ? "\uf06e" : "\uf070";
-                tb.Foreground = new Avalonia.Media.SolidColorBrush(layer.IsVisible ? Avalonia.Media.Color.Parse("#AAAAAA") : Avalonia.Media.Color.Parse("#555555"));
+                tb.Foreground = new SolidColorBrush(layer.IsVisible ? Color.Parse("#AAAAAA") : Color.Parse("#555555"));
             }
         }
     }
@@ -585,7 +585,7 @@ public partial class MainWindow : Window
             if (btn.Content is TextBlock tb)
             {
                 tb.Text = layer.IsLocked ? "\uf023" : "\uf09c"; // lock : unlock
-                tb.Foreground = new Avalonia.Media.SolidColorBrush(layer.IsLocked ? Avalonia.Media.Color.Parse("#AAAAAA") : Avalonia.Media.Color.Parse("#555555"));
+                tb.Foreground = new SolidColorBrush(layer.IsLocked ? Color.Parse("#AAAAAA") : Color.Parse("#555555"));
             }
         }
     }
@@ -712,7 +712,7 @@ public partial class MainWindow : Window
         
         if (_currentConfig != null && File.Exists(_currentConfig.OutputPath))
         {
-            var thumbPath = await GenerateThumbnailAsync(_currentConfig.OutputPath);
+            var thumbPath = await MainWindow.GenerateThumbnailAsync(_currentConfig.OutputPath);
             
             var fileInfo = new FileInfo(_currentConfig.OutputPath);
             var record = new Record
@@ -734,7 +734,7 @@ public partial class MainWindow : Window
         await LoadHistoryAsync(); // Refresh history
     }
 
-    private async Task<string> GenerateThumbnailAsync(string videoPath)
+    private static async Task<string> GenerateThumbnailAsync(string videoPath)
     {
 #if WINDOWS
         try
@@ -812,9 +812,9 @@ public partial class MainWindow : Window
         if (result)
         {
             // Changes are applied inside SettingsWindow and saved to config
-            AppSaveLocation = Zenith.UI.Utils.ConfigManager.CurrentConfig.SaveLocation;
-            AppUseHardwareAcceleration = Zenith.UI.Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration;
-            AppSelectedGpuId = Zenith.UI.Utils.ConfigManager.CurrentConfig.SelectedGpuId;
+            AppSaveLocation = Utils.ConfigManager.CurrentConfig.SaveLocation;
+            AppUseHardwareAcceleration = Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration;
+            AppSelectedGpuId = Utils.ConfigManager.CurrentConfig.SelectedGpuId;
         }
     }
 
@@ -863,12 +863,14 @@ public partial class MainWindow : Window
             Width = 300,
             Height = 150,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false
+            CanResize = false,
+            CanMaximize = false,
+            CanMinimize = false,
         };
-        var panel = new Avalonia.Controls.StackPanel { Margin = new Avalonia.Thickness(20) };
-        panel.Children.Add(new Avalonia.Controls.TextBlock { Text = "Zenith Screen Recorder", FontWeight = Avalonia.Media.FontWeight.Bold, FontSize = 16, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, Margin = new Avalonia.Thickness(0, 0, 0, 10) });
-        panel.Children.Add(new Avalonia.Controls.TextBlock { Text = "Version 1.0.0", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center });
-        panel.Children.Add(new Avalonia.Controls.TextBlock { Text = "Powered by FFmpeg & Avalonia UI", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, Margin = new Avalonia.Thickness(0, 10, 0, 0) });
+        var panel = new StackPanel { Margin = new Thickness(20) };
+        panel.Children.Add(new TextBlock { Text = "Zenith Screen Recorder", FontWeight = FontWeight.Bold, FontSize = 16, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 10) });
+        panel.Children.Add(new TextBlock { Text = "Version 1.0.0", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center });
+        panel.Children.Add(new TextBlock { Text = "Powered by FFmpeg & Avalonia UI", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, Margin = new Thickness(0, 10, 0, 0) });
         dialog.Content = panel;
         await dialog.ShowDialog(this);
     }

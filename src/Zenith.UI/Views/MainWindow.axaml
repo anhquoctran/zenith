@@ -45,36 +45,74 @@
         <Border Grid.Row="1" Height="30" Background="#1A1A1A" BorderBrush="#222222" BorderThickness="0,0,0,1">
             <Menu Background="Transparent" FontSize="12"  Foreground="#ECECEC" VerticalAlignment="Center" Margin="10,0,0,0">
                 <MenuItem Header="{DynamicResource Menu_File}">
-                    <MenuItem Header="{DynamicResource Menu_Settings}" Click="Menu_Settings_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_Settings}" HotKey="Ctrl+O" InputGesture="Ctrl+O" Click="Menu_Settings_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf013;"/></MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
-                    <MenuItem Header="{DynamicResource Auto_ShowRecordings}" Click="Menu_ShowRecordings_Click"/>
+                    <MenuItem Header="{DynamicResource Auto_ShowRecordings}" HotKey="Ctrl+R" InputGesture="Ctrl+R" Click="Menu_ShowRecordings_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf07b;"/></MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
-                    <MenuItem Header="{DynamicResource Menu_Exit}" Click="Menu_Exit_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_Exit}" HotKey="Alt+F4" InputGesture="Alt+F4" Click="Menu_Exit_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf08b;"/></MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
                 <MenuItem Header="{DynamicResource Menu_Edit}">
-                    <MenuItem Header="{DynamicResource Menu_CopyLayer}" InputGesture="Ctrl+C" Click="Menu_CopyLayer_Click"/>
-                    <MenuItem Header="{DynamicResource Menu_CutLayer}" InputGesture="Ctrl+X" Click="Menu_CutLayer_Click"/>
-                    <MenuItem Header="{DynamicResource Menu_PasteLayer}" InputGesture="Ctrl+V" Click="Menu_PasteLayer_Click"/>
-                    <MenuItem Header="{DynamicResource Menu_DeleteLayer}" InputGesture="Delete" Click="Menu_DeleteLayer_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_CopyLayer}" HotKey="Ctrl+C" InputGesture="Ctrl+C" Click="Menu_CopyLayer_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf0c5;"/></MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource Menu_CutLayer}" HotKey="Ctrl+X" InputGesture="Ctrl+X" Click="Menu_CutLayer_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf0c4;"/></MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource Menu_PasteLayer}" HotKey="Ctrl+V" InputGesture="Ctrl+V" Click="Menu_PasteLayer_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf0ea;"/></MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource Menu_DeleteLayer}" HotKey="Delete" InputGesture="Delete" Click="Menu_DeleteLayer_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf1f8;"/></MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
                 <MenuItem Header="{DynamicResource Menu_Layers}">
                     <MenuItem Header="{DynamicResource Menu_AddVideoSource}">
-                        <MenuItem Header="{DynamicResource Type_Screen}" Click="Menu_AddScreen_Click"/>
-                        <MenuItem Header="{DynamicResource Type_Image}" Click="Menu_AddImage_Click"/>
-                        <MenuItem Header="{DynamicResource Type_VideoFile}" Click="Menu_AddVideoFile_Click"/>
-                        <MenuItem Header="{DynamicResource Type_Text}" Click="Menu_AddText_Click"/>
-                        <MenuItem Header="{DynamicResource Type_Camera}" Click="Menu_AddCamera_Click"/>
-                        <MenuItem Header="{DynamicResource Type_FpsCounter}" Click="Menu_AddFps_Click"/>
+                        <MenuItem Header="{DynamicResource Type_Screen}" HotKey="Ctrl+1" InputGesture="Ctrl+1" Click="Menu_AddScreen_Click">
+                            <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf108;"/></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="{DynamicResource Type_Image}" HotKey="Ctrl+2" InputGesture="Ctrl+2" Click="Menu_AddImage_Click">
+                            <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf03e;"/></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="{DynamicResource Type_VideoFile}" HotKey="Ctrl+3" InputGesture="Ctrl+3" Click="Menu_AddVideoFile_Click">
+                            <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf03d;"/></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="{DynamicResource Type_Text}" HotKey="Ctrl+4" InputGesture="Ctrl+4" Click="Menu_AddText_Click">
+                            <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf031;"/></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="{DynamicResource Type_Camera}" HotKey="Ctrl+5" InputGesture="Ctrl+5" Click="Menu_AddCamera_Click">
+                            <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf030;"/></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="{DynamicResource Type_FpsCounter}" HotKey="Ctrl+6" InputGesture="Ctrl+6" Click="Menu_AddFps_Click">
+                            <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf0e4;"/></MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
-                    <MenuItem Header="{DynamicResource Menu_RemoveVideoSource}" Click="RemoveVideoLayerButton_Click"/>
-                    <MenuItem Header="{DynamicResource Menu_MoveSourceUp}" Click="MoveUpVideoLayerButton_Click"/>
-                    <MenuItem Header="{DynamicResource Menu_MoveSourceDown}" Click="MoveDownVideoLayerButton_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_RemoveVideoSource}" HotKey="Shift+Delete" InputGesture="Shift+Delete" Click="RemoveVideoLayerButton_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf068;"/></MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource Menu_MoveSourceUp}" HotKey="Ctrl+Up" InputGesture="Ctrl+Up" Click="MoveUpVideoLayerButton_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf062;"/></MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource Menu_MoveSourceDown}" HotKey="Ctrl+Down" InputGesture="Ctrl+Down" Click="MoveDownVideoLayerButton_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf063;"/></MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
-                    <MenuItem Header="{DynamicResource Menu_AddAudioSource}" x:Name="MenuAddAudioSource"/>
-                    <MenuItem Header="{DynamicResource Menu_RemoveAudioSource}" Click="RemoveAudioLayerButton_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_AddAudioSource}" x:Name="MenuAddAudioSource">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf067;"/></MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource Menu_RemoveAudioSource}" Click="RemoveAudioLayerButton_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf068;"/></MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
                 <MenuItem Header="{DynamicResource Menu_Help}">
-                    <MenuItem Header="{DynamicResource Menu_About}" Click="Menu_About_Click"/>
+                    <MenuItem Header="{DynamicResource Menu_About}" HotKey="F1" InputGesture="F1" Click="Menu_About_Click">
+                        <MenuItem.Icon><TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xf05a;"/></MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
             </Menu>
         </Border>
