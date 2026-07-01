@@ -1,4 +1,5 @@
 using Avalonia;
+using Zenith.UI.Controls;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Linq;
 using Zenith.Core;
 using Avalonia.Platform.Storage;
 
-namespace Zenith.UI;
+namespace Zenith.UI.Views;
 
 public partial class LayerPropertiesWindow : Window
 {

@@ -1,4 +1,5 @@
 using Avalonia;
+using Zenith.UI.Controls;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -8,7 +9,7 @@ using System.Runtime.InteropServices;
 using Zenith.Core;
 using Zenith.Interop;
 
-namespace Zenith.UI;
+namespace Zenith.UI.Views;
 
 public partial class LayerOverlayWindow : Window
 {

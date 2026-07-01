@@ -198,7 +198,6 @@
     <system:String x:Key="Auto_WebcamDevice">Webcam Device</system:String>
     <system:String x:Key="Auto_ZenithScreenRecorder">Zenith Screen Recorder</system:String>
     <system:String x:Key="Auto_ShowMainWindow">Show Main Window</system:String>
-    <system:String x:Key="Auto_StopRecording">Stop Recording</system:String>
     <system:String x:Key="Auto_Exit">Exit</system:String>
     <system:String x:Key="Auto_BringtoFront">Bring to Front</system:String>
     <system:String x:Key="Auto_SendtoBack">Send to Back</system:String>
@@ -208,8 +207,6 @@
     <system:String x:Key="Auto_Delete">Delete</system:String>
     <system:String x:Key="Auto_Pause">Pause</system:String>
     <system:String x:Key="Auto_xf04c">&amp;#xf04c;</system:String>
-    <system:String x:Key="Auto_Stop">Stop</system:String>
-    <system:String x:Key="Auto_xf04d">&amp;#xf04d;</system:String>
     <system:String x:Key="Auto_Snapshot">Snapshot</system:String>
     <system:String x:Key="Auto_SelectSaveLocation">Select Save Location</system:String>
     <system:String x:Key="Auto_SystemAudioDefault">System Audio (Default)</system:String>

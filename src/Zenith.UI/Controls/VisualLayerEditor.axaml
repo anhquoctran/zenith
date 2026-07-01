@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:core="using:Zenith.Core"
              xmlns:local="using:Zenith.UI"
-             x:Class="Zenith.UI.VisualLayerEditor"
+             xmlns:controls="using:Zenith.UI.Controls"
+             x:Class="Zenith.UI.Controls.VisualLayerEditor"
              ClipToBounds="True"
              Focusable="True"
              KeyDown="UserControl_KeyDown">
@@ -46,7 +47,7 @@
             
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="core:VideoLayer">
-                    <local:VisualLayerItem Width="{Binding Width}" Height="{Binding Height}" />
+                    <controls:VisualLayerItem Width="{Binding Width}" Height="{Binding Height}" />
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

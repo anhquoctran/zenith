@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Zenith.UI.LayerOverlayWindow"
+        xmlns:controls="using:Zenith.UI.Controls"
+        x:Class="Zenith.UI.Views.LayerOverlayWindow"
         Title="Layer Overlay"
         SystemDecorations="None"
         Topmost="True"

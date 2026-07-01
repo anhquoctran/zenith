@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
+using Zenith.UI.Controls;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -11,7 +12,7 @@ using Zenith.Interop;
 using Zenith.Data;
 using System.IO;
 
-namespace Zenith.UI;
+namespace Zenith.UI.Views;
 
 public partial class SettingsWindow : Window
 {
@@ -53,7 +54,7 @@ public partial class SettingsWindow : Window
         var langComboBox = this.FindControl<ComboBox>("LanguageComboBox");
         if (langComboBox != null)
         {
-            var currentLang = Zenith.UI.Utils.LocalizationManager.CurrentConfig.Language;
+            var currentLang = Zenith.UI.Utils.ConfigManager.CurrentConfig.Language;
             foreach (ComboBoxItem item in langComboBox.Items)
             {
                 if (item.Tag is string tag && tag == currentLang)
@@ -95,14 +96,24 @@ public partial class SettingsWindow : Window
         var gpuComboBox = this.FindControl<ComboBox>("GpuComboBox");
         
         if (saveLocationTextBox != null)
-            SaveLocation = saveLocationTextBox.Text ?? "";
+            Zenith.UI.Utils.ConfigManager.CurrentConfig.SaveLocation = saveLocationTextBox.Text ?? "";
             
         if (hwAccelCheckBox != null)
-            UseHardwareAcceleration = hwAccelCheckBox.IsChecked == true;
+            Zenith.UI.Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration = hwAccelCheckBox.IsChecked == true;
             
-        if (gpuComboBox != null)
-            SelectedGpu = gpuComboBox.SelectedItem as GPUDevice;
+        if (gpuComboBox != null && gpuComboBox.SelectedItem is GPUDevice gpu)
+            Zenith.UI.Utils.ConfigManager.CurrentConfig.SelectedGpuId = gpu.Id;
             
+        var langComboBox = this.FindControl<ComboBox>("LanguageComboBox");
+        if (langComboBox != null && langComboBox.SelectedItem is ComboBoxItem item && item.Tag is string langCode)
+        {
+            Zenith.UI.Utils.ConfigManager.ChangeLanguage(langCode);
+        }
+        else
+        {
+            Zenith.UI.Utils.ConfigManager.SaveConfig();
+        }
+
         Close(true); // Return true indicating OK was clicked
     }
 
@@ -139,11 +150,4 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void LanguageComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (sender is ComboBox cb && cb.SelectedItem is ComboBoxItem item && item.Tag is string langCode)
-        {
-            Zenith.UI.Utils.LocalizationManager.ChangeLanguage(langCode);
-        }
-    }
 }

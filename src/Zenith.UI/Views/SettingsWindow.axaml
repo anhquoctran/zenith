@@ -1,10 +1,11 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:Zenith.UI.Controls"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:core="using:Zenith.Core"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
-        x:Class="Zenith.UI.SettingsWindow"
+        x:Class="Zenith.UI.Views.SettingsWindow"
         Title="{DynamicResource Title_Settings}"
         Width="750" Height="550"
         WindowStartupLocation="CenterOwner"
@@ -63,7 +64,7 @@
                         
                         <StackPanel Classes="settingGroup">
                             <TextBlock Text="{DynamicResource Lbl_Language}" Classes="fieldLabel"/>
-                            <ComboBox x:Name="LanguageComboBox" HorizontalAlignment="Stretch" SelectionChanged="LanguageComboBox_SelectionChanged">
+                            <ComboBox x:Name="LanguageComboBox" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="{DynamicResource Auto_English}" Tag="en-US"/>
                                 <ComboBoxItem Content="{DynamicResource Auto_ChineseSimplified}" Tag="zh-CN"/>
                                 <ComboBoxItem Content="{DynamicResource Auto_ChineseTraditional}" Tag="zh-TW"/>

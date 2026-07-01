@@ -7,7 +7,7 @@ using Avalonia.Media.Imaging;
 using Zenith.Core;
 using System.ComponentModel;
 
-namespace Zenith.UI;
+namespace Zenith.UI.Controls;
 
 public partial class VisualLayerItem : UserControl
 {

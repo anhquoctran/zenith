@@ -5,7 +5,7 @@ using Avalonia.Threading;
 using System;
 using Zenith.Core;
 
-namespace Zenith.UI;
+namespace Zenith.UI.Controls;
 
 public partial class RecordingWidget : Window
 {

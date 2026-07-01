@@ -1,4 +1,5 @@
 using Avalonia;
+using Zenith.UI.Controls;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
@@ -17,7 +18,7 @@ using Avalonia.VisualTree;
 using System.Linq;
 using Path = System.IO.Path;
 
-namespace Zenith.UI;
+namespace Zenith.UI.Views;
 
 public class PathToBitmapConverter : Avalonia.Data.Converters.IValueConverter
 {
@@ -76,9 +77,21 @@ public partial class MainWindow : Window
     public System.Collections.ObjectModel.ObservableCollection<AudioLayer> AudioLayers { get; } = new();
 
     private List<GPUDevice> _gpuDevices = new();
-    public string AppSaveLocation { get; set; } = "";
-    public bool AppUseHardwareAcceleration { get; set; } = true;
-    public string AppSelectedGpuId { get; set; } = "Auto";
+    public string AppSaveLocation 
+    { 
+        get => Zenith.UI.Utils.ConfigManager.CurrentConfig.SaveLocation; 
+        set => Zenith.UI.Utils.ConfigManager.CurrentConfig.SaveLocation = value; 
+    }
+    public bool AppUseHardwareAcceleration 
+    { 
+        get => Zenith.UI.Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration; 
+        set => Zenith.UI.Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration = value; 
+    }
+    public string AppSelectedGpuId 
+    { 
+        get => Zenith.UI.Utils.ConfigManager.CurrentConfig.SelectedGpuId; 
+        set => Zenith.UI.Utils.ConfigManager.CurrentConfig.SelectedGpuId = value; 
+    }
     public MainWindow()
     {
         InitializeComponent();
@@ -161,7 +174,6 @@ public partial class MainWindow : Window
             }
             catch { }
 #endif
-            AppSaveLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), Constants.OUTPUT_PREFIX_PATH);
             await _recordRepository.InitializeAsync();
             await LoadHistoryAsync();
             LoadDevices();
@@ -799,9 +811,10 @@ public partial class MainWindow : Window
         var result = await settingsWindow.ShowDialog<bool>(this);
         if (result)
         {
-            AppSaveLocation = settingsWindow.SaveLocation;
-            AppUseHardwareAcceleration = settingsWindow.UseHardwareAcceleration;
-            AppSelectedGpuId = settingsWindow.SelectedGpu?.Id ?? "Auto";
+            // Changes are applied inside SettingsWindow and saved to config
+            AppSaveLocation = Zenith.UI.Utils.ConfigManager.CurrentConfig.SaveLocation;
+            AppUseHardwareAcceleration = Zenith.UI.Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration;
+            AppSelectedGpuId = Zenith.UI.Utils.ConfigManager.CurrentConfig.SelectedGpuId;
         }
     }
 

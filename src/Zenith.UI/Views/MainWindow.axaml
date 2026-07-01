@@ -1,9 +1,11 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:Zenith.UI.Controls"
         xmlns:data="using:Zenith.Data"
         xmlns:core="using:Zenith.Core"
-        xmlns:local="using:Zenith.UI"
-        x:Class="Zenith.UI.MainWindow"
+        xmlns:local="using:Zenith.UI.Views"
+        xmlns:app="using:Zenith.UI"
+        x:Class="Zenith.UI.Views.MainWindow"
         Title="{DynamicResource Auto_Zenith}"
         Icon="/Assets/logo.png"
         Width="1280" 
@@ -130,7 +132,7 @@
                     <Viewbox Grid.Row="0" Stretch="Uniform">
                         <Grid Width="1920" Height="1080">
                             <Image x:Name="PreviewImage" Stretch="Fill" />
-                            <local:VisualLayerEditor x:Name="LayerEditor" />
+                            <controls:VisualLayerEditor x:Name="LayerEditor" />
                         </Grid>
                     </Viewbox>
 

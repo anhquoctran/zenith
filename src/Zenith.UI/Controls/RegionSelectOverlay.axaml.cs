@@ -4,7 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 
-namespace Zenith.UI;
+namespace Zenith.UI.Controls;
 
 public partial class RegionSelectOverlay : Window
 {

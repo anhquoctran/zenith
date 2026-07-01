@@ -10,14 +10,14 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        Zenith.UI.Utils.LocalizationManager.LoadSavedLanguage();
+        Zenith.UI.Utils.ConfigManager.LoadConfig();
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            desktop.MainWindow = new Zenith.UI.Views.MainWindow();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -34,7 +34,7 @@ public partial class App : Application
 
     private void NativeMenuItem_Stop_Click(object? sender, EventArgs e)
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow is MainWindow mainWindow)
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow is Zenith.UI.Views.MainWindow mainWindow)
         {
             _ = mainWindow.StopRecordingAsync();
         }

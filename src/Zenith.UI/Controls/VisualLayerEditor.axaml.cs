@@ -13,7 +13,7 @@ using Avalonia.VisualTree;
 using System.Text.Json;
 using Zenith.Core;
 
-namespace Zenith.UI;
+namespace Zenith.UI.Controls;
 
 public partial class VisualLayerEditor : UserControl
 {
