@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
     <system:String x:Key="Menu_File">_Datei</system:String>
@@ -198,7 +198,6 @@
     <system:String x:Key="Auto_WebcamDevice">Webcam-Gerät</system:String>
     <system:String x:Key="Auto_ZenithScreenRecorder">Zenith Bildschirmrekorder</system:String>
     <system:String x:Key="Auto_ShowMainWindow">Hauptfenster anzeigen</system:String>
-    <system:String x:Key="Auto_StopRecording">Aufnahme stoppen</system:String>
     <system:String x:Key="Auto_Exit">Beenden</system:String>
     <system:String x:Key="Auto_BringtoFront">In den Vordergrund</system:String>
     <system:String x:Key="Auto_SendtoBack">In den Hintergrund</system:String>
@@ -208,8 +207,6 @@
     <system:String x:Key="Auto_Delete">Löschen</system:String>
     <system:String x:Key="Auto_Pause">Pause</system:String>
     <system:String x:Key="Auto_xf04c">&amp;#xf04c;</system:String>
-    <system:String x:Key="Auto_Stop">Stopp</system:String>
-    <system:String x:Key="Auto_xf04d">&amp;#xf04d;</system:String>
     <system:String x:Key="Auto_Snapshot">Schnappschuss</system:String>
     <system:String x:Key="Auto_SelectSaveLocation">Speicherort auswählen</system:String>
     <system:String x:Key="Auto_SystemAudioDefault">Systemaudio (Standard)</system:String>

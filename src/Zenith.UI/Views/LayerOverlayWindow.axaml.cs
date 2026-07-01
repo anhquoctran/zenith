@@ -82,6 +82,47 @@ public partial class LayerOverlayWindow : Window
 
             FpsText.Text = "FPS: 0";
         }
+        else if (_layer.Type == LayerType.Text)
+        {
+            TextLayerContent.IsVisible = true;
+            TextLayerContent.Text = _layer.TextContent;
+            TextLayerContent.FontFamily = new FontFamily(_layer.FontFamily ?? "Arial");
+            TextLayerContent.FontSize = _layer.FontSize > 0 ? _layer.FontSize : 48;
+            
+            try
+            {
+                if (!string.IsNullOrEmpty(_layer.FontColor))
+                {
+                    TextLayerContent.Foreground = new SolidColorBrush(Color.Parse(_layer.FontColor));
+                }
+            }
+            catch { TextLayerContent.Foreground = Brushes.White; }
+            
+            switch (_layer.TextAlignment?.ToLowerInvariant())
+            {
+                case "center": TextLayerContent.TextAlignment = TextAlignment.Center; break;
+                case "right": TextLayerContent.TextAlignment = TextAlignment.Right; break;
+                default: TextLayerContent.TextAlignment = TextAlignment.Left; break;
+            }
+
+            if (_layer.FontStyle?.ToLowerInvariant() == "italic")
+                TextLayerContent.FontStyle = FontStyle.Italic;
+                
+            if (_layer.FontWeight?.ToLowerInvariant() == "bold")
+                TextLayerContent.FontWeight = FontWeight.Bold;
+        }
+        else if (_layer.Type == LayerType.Image && !string.IsNullOrEmpty(_layer.FilePath) && System.IO.File.Exists(_layer.FilePath))
+        {
+            ImageLayerContent.IsVisible = true;
+            try
+            {
+                ImageLayerContent.Source = new Avalonia.Media.Imaging.Bitmap(_layer.FilePath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load image layer: {ex.Message}");
+            }
+        }
     }
     
     public void UpdateRealtimeFps(int fps)

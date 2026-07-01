@@ -10,54 +10,47 @@ using Avalonia.Platform.Storage;
 using Zenith.Core;
 using Zenith.Interop;
 using Zenith.Data;
+using Zenith.UI.ViewModels;
 using System.IO;
 
 namespace Zenith.UI.Views;
 
 public partial class SettingsWindow : Window
 {
-    private List<GPUDevice>? _devices;
-    
-    // Properties that MainWindow will read/write
-    public string SaveLocation { get; private set; } = string.Empty;
-    public bool UseHardwareAcceleration { get; private set; } = true;
-    public GPUDevice? SelectedGpu { get; private set; }
+    private SettingsWindowViewModel _viewModel;
 
     public SettingsWindow()
     {
+        _viewModel = new SettingsWindowViewModel();
         InitializeComponent();
     }
     
     public SettingsWindow(string initialSaveLocation, bool initialUseHwAccel, string initialGpuId, List<GPUDevice> devices) : this()
     {
-        SaveLocation = initialSaveLocation;
-        UseHardwareAcceleration = initialUseHwAccel;
-        _devices = devices;
+        _viewModel = new SettingsWindowViewModel(initialSaveLocation, initialUseHwAccel, initialGpuId, devices);
         
         var saveLocationTextBox = this.FindControl<TextBox>("SaveLocationTextBox");
         var hwAccelCheckBox = this.FindControl<CheckBox>("HardwareAccelerationCheckBox");
         var gpuComboBox = this.FindControl<ComboBox>("GpuComboBox");
         
         if (saveLocationTextBox != null)
-            saveLocationTextBox.Text = SaveLocation;
+            saveLocationTextBox.Text = _viewModel.SaveLocation;
             
         if (hwAccelCheckBox != null)
-            hwAccelCheckBox.IsChecked = UseHardwareAcceleration;
+            hwAccelCheckBox.IsChecked = _viewModel.UseHardwareAcceleration;
             
-            if (gpuComboBox != null && _devices != null)
+        if (gpuComboBox != null)
         {
-            gpuComboBox.ItemsSource = _devices;
-            var selected = _devices.FirstOrDefault(d => d.Id == initialGpuId) ?? _devices.FirstOrDefault();
-            gpuComboBox.SelectedItem = selected;
+            gpuComboBox.ItemsSource = _viewModel.GpuDevices;
+            gpuComboBox.SelectedItem = _viewModel.SelectedGpu;
         }
 
         var langComboBox = this.FindControl<ComboBox>("LanguageComboBox");
         if (langComboBox != null)
         {
-            var currentLang = Zenith.UI.Utils.ConfigManager.CurrentConfig.Language;
             foreach (ComboBoxItem item in langComboBox.Items)
             {
-                if (item.Tag is string tag && tag == currentLang)
+                if (item.Tag is string tag && tag == _viewModel.Language)
                 {
                     langComboBox.SelectedItem = item;
                     break;
@@ -91,35 +84,28 @@ public partial class SettingsWindow : Window
 
     private void OkButton_Click(object? sender, RoutedEventArgs e)
     {
+        // Read values from UI into ViewModel
         var saveLocationTextBox = this.FindControl<TextBox>("SaveLocationTextBox");
         var hwAccelCheckBox = this.FindControl<CheckBox>("HardwareAccelerationCheckBox");
         var gpuComboBox = this.FindControl<ComboBox>("GpuComboBox");
+        var langComboBox = this.FindControl<ComboBox>("LanguageComboBox");
         
         if (saveLocationTextBox != null)
-            Zenith.UI.Utils.ConfigManager.CurrentConfig.SaveLocation = saveLocationTextBox.Text ?? "";
-            
+            _viewModel.SaveLocation = saveLocationTextBox.Text ?? "";
         if (hwAccelCheckBox != null)
-            Zenith.UI.Utils.ConfigManager.CurrentConfig.UseHardwareAcceleration = hwAccelCheckBox.IsChecked == true;
-            
-        if (gpuComboBox != null && gpuComboBox.SelectedItem is GPUDevice gpu)
-            Zenith.UI.Utils.ConfigManager.CurrentConfig.SelectedGpuId = gpu.Id;
-            
-        var langComboBox = this.FindControl<ComboBox>("LanguageComboBox");
-        if (langComboBox != null && langComboBox.SelectedItem is ComboBoxItem item && item.Tag is string langCode)
-        {
-            Zenith.UI.Utils.ConfigManager.ChangeLanguage(langCode);
-        }
-        else
-        {
-            Zenith.UI.Utils.ConfigManager.SaveConfig();
-        }
-
-        Close(true); // Return true indicating OK was clicked
+            _viewModel.UseHardwareAcceleration = hwAccelCheckBox.IsChecked == true;
+        if (gpuComboBox?.SelectedItem is GPUDevice gpu)
+            _viewModel.SelectedGpu = gpu;
+        if (langComboBox?.SelectedItem is ComboBoxItem item && item.Tag is string langCode)
+            _viewModel.Language = langCode;
+        
+        _viewModel.ApplySettings();
+        Close(true);
     }
 
     private void CancelButton_Click(object? sender, RoutedEventArgs e)
     {
-        Close(false); // Return false indicating Cancel
+        Close(false);
     }
 
     private void CategoryListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -149,5 +135,4 @@ public partial class SettingsWindow : Window
             // Ignore during initialization when name scope is not ready yet
         }
     }
-
 }

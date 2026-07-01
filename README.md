@@ -80,8 +80,16 @@ All projects reside under the `src/` directory:
 Ensure you have the .NET 10 SDK installed.
 
 1. Clone the repository.
-2. Open `src/Zenith.slnx` in your preferred IDE (Visual Studio, Rider, VS Code).
-3. Set `Zenith.UI` as the startup project and run!
+2. Download FFmpeg shared libraries (auto-downloads on first build, or run manually):
+   ```bash
+   # Windows (PowerShell)
+   .\scripts\download-ffmpeg.ps1
+
+   # Linux/macOS
+   ./scripts/download-ffmpeg.sh
+   ```
+3. Open `src/Zenith.slnx` in your preferred IDE (Visual Studio, Rider, VS Code).
+4. Set `Zenith.UI` as the startup project and run!
 
 ### Building for Production
 To build standalone executables, use the `.NET CLI` from the root directory:

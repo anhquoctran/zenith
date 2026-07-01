@@ -94,11 +94,22 @@ public partial class VisualLayerEditor : UserControl
         LayersItemsControl.ItemsSource = VideoLayers;
         VideoLayers.CollectionChanged += VideoLayers_CollectionChanged;
         AttachPropertyListeners();
+        UpdateZOrder();
     }
 
     private void VideoLayers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         AttachPropertyListeners();
+        UpdateZOrder();
+    }
+
+    private void UpdateZOrder()
+    {
+        if (VideoLayers == null) return;
+        for (var i = 0; i < VideoLayers.Count; i++)
+        {
+            VideoLayers[i].ZOrder = i;
+        }
     }
 
     private void AttachPropertyListeners()
@@ -152,6 +163,11 @@ public partial class VisualLayerEditor : UserControl
             EditorCanvas.Children.Add(_selectionBox!);
             for (var i = 0; i < 8; i++) EditorCanvas.Children.Add(_resizeHandles[i]);
         }
+
+        // Ensure adorners always render above all layers
+        var topZ = (VideoLayers?.Count ?? 0) + 10;
+        _selectionBox!.ZIndex = topZ;
+        for (var i = 0; i < 8; i++) _resizeHandles[i].ZIndex = topZ + 1;
 
         // Hide resize handles and change cursor if locked
         if (_selectedLayer.IsLocked)

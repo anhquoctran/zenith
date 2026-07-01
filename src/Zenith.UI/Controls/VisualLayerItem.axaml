@@ -26,11 +26,21 @@
             <!-- Camera / Image Preview -->
             <Image x:Name="MediaImage" Stretch="UniformToFill" IsVisible="False"/>
 
+            <!-- Camera Placeholder -->
+            <Border x:Name="CameraPlaceholder" IsVisible="False" Background="#33007ACC" BorderBrush="#007ACC" BorderThickness="2" CornerRadius="4">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4">
+                    <TextBlock Text="&#xf030;" FontFamily="{StaticResource FontAwesome}" FontSize="24" Foreground="#AAAAAA" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="CameraPlaceholderText" Text="Camera" Foreground="#AAAAAA" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
             <!-- Text Preview -->
             <TextBlock x:Name="TextDisplay" 
                        IsVisible="False"
                        Text="{Binding TextContent}" 
-                       FontSize="{Binding FontSize}" 
+                       FontSize="{Binding FontSize}"
+                       Foreground="White"
+                       TextWrapping="Wrap"
                        DoubleTapped="TextDisplay_DoubleTapped"
                        Background="Transparent"/>
 

@@ -16,5 +16,11 @@
         
         <!-- For FPS Counter -->
         <TextBlock x:Name="FpsText" IsVisible="False" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold"/>
+
+        <!-- For Text Layer -->
+        <TextBlock x:Name="TextLayerContent" IsVisible="False" TextWrapping="Wrap" />
+
+        <!-- For Image Layer -->
+        <Image x:Name="ImageLayerContent" IsVisible="False" Stretch="Uniform" />
     </Grid>
 </Window>

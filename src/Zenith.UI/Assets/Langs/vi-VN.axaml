@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
     <system:String x:Key="Menu_File">_Tệp</system:String>
@@ -198,7 +198,6 @@
     <system:String x:Key="Auto_WebcamDevice">Thiết bị Webcam</system:String>
     <system:String x:Key="Auto_ZenithScreenRecorder">Zenith - Trình Ghi Hình</system:String>
     <system:String x:Key="Auto_ShowMainWindow">Hiển thị cửa sổ chính</system:String>
-    <system:String x:Key="Auto_StopRecording">Dừng ghi</system:String>
     <system:String x:Key="Auto_Exit">Thoát</system:String>
     <system:String x:Key="Auto_BringtoFront">Đưa lên trên cùng</system:String>
     <system:String x:Key="Auto_SendtoBack">Đưa xuống dưới cùng</system:String>
@@ -208,8 +207,6 @@
     <system:String x:Key="Auto_Delete">Xóa</system:String>
     <system:String x:Key="Auto_Pause">Tạm dừng</system:String>
     <system:String x:Key="Auto_xf04c">&amp;#xf04c;</system:String>
-    <system:String x:Key="Auto_Stop">Dừng</system:String>
-    <system:String x:Key="Auto_xf04d">&amp;#xf04d;</system:String>
     <system:String x:Key="Auto_Snapshot">Chụp ảnh</system:String>
     <system:String x:Key="Auto_SelectSaveLocation">Chọn vị trí lưu</system:String>
     <system:String x:Key="Auto_SystemAudioDefault">Âm thanh hệ thống (Mặc định)</system:String>

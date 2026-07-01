@@ -5,58 +5,51 @@ using Avalonia.Interactivity;
 using System.Collections.Generic;
 using System.Linq;
 using Zenith.Core;
+using Zenith.UI.ViewModels;
 using Avalonia.Platform.Storage;
 
 namespace Zenith.UI.Views;
 
 public partial class LayerPropertiesWindow : Window
 {
-    private readonly VideoLayer _layer;
-    private readonly IDeviceEnumerator? _deviceEnumerator;
+    private readonly LayerPropertiesViewModel _viewModel;
 
     public LayerPropertiesWindow()
     {
         InitializeComponent();
-        _layer = new VideoLayer(); // Default for designer
+        _viewModel = new LayerPropertiesViewModel(new VideoLayer());
     }
 
     public LayerPropertiesWindow(VideoLayer layer, IDeviceEnumerator? deviceEnumerator = null) : this()
     {
-        _layer = layer;
-        _deviceEnumerator = deviceEnumerator;
+        _viewModel = new LayerPropertiesViewModel(layer, deviceEnumerator);
         
-        NameTextBox.Text = _layer.Name;
+        NameTextBox.Text = _viewModel.Name;
         
-        if (_layer.Type == LayerType.Text || _layer.Type == LayerType.FpsCounter)
+        if (_viewModel.IsTextLayer)
         {
             TextPropertiesPanel.IsVisible = true;
-            TextContentTextBox.Text = _layer.TextContent;
-            FontFamilyTextBox.Text = _layer.FontFamily;
-            FontSizeNumeric.Value = _layer.FontSize;
-            FontColorTextBox.Text = _layer.FontColor;
+            TextContentTextBox.Text = _viewModel.TextContent;
+            FontFamilyTextBox.Text = _viewModel.FontFamily;
+            FontSizeNumeric.Value = _viewModel.FontSize;
+            FontColorTextBox.Text = _viewModel.FontColor;
             
-            SetComboBoxSelection(FontStyleComboBox, _layer.FontStyle);
-            SetComboBoxSelection(FontWeightComboBox, _layer.FontWeight);
-            SetComboBoxSelection(TextAlignmentComboBox, _layer.TextAlignment);
+            SetComboBoxSelection(FontStyleComboBox, _viewModel.FontStyle);
+            SetComboBoxSelection(FontWeightComboBox, _viewModel.FontWeight);
+            SetComboBoxSelection(TextAlignmentComboBox, _viewModel.TextAlignment);
         }
-        else if (_layer.Type == LayerType.Image || _layer.Type == LayerType.VideoFile)
+        else if (_viewModel.IsFileLayer)
         {
             FilePropertiesPanel.IsVisible = true;
-            FilePathTextBox.Text = _layer.FilePath;
+            FilePathTextBox.Text = _viewModel.FilePath;
         }
-        else if (_layer.Type == LayerType.Camera)
+        else if (_viewModel.IsCameraLayer)
         {
             CameraPropertiesPanel.IsVisible = true;
-            if (_deviceEnumerator != null)
-            {
-                var webcams = _deviceEnumerator.GetWebcams().ToList();
-                WebcamComboBox.ItemsSource = webcams;
-                WebcamComboBox.SelectedItem = webcams.FirstOrDefault(w => w.Id == _layer.SourceId);
-                if (WebcamComboBox.SelectedItem == null && webcams.Count > 0)
-                {
-                    WebcamComboBox.SelectedIndex = 0;
-                }
-            }
+            WebcamComboBox.ItemsSource = _viewModel.Webcams;
+            WebcamComboBox.SelectedItem = _viewModel.SelectedWebcam;
+            if (WebcamComboBox.SelectedItem == null && _viewModel.Webcams.Count > 0)
+                WebcamComboBox.SelectedIndex = 0;
         }
     }
 
@@ -79,31 +72,30 @@ public partial class LayerPropertiesWindow : Window
 
     private void SaveButton_Click(object? sender, RoutedEventArgs e)
     {
-        _layer.Name = NameTextBox.Text ?? "New Layer";
+        // Read values from UI into ViewModel
+        _viewModel.Name = NameTextBox.Text ?? "New Layer";
         
-        if (_layer.Type == LayerType.Text || _layer.Type == LayerType.FpsCounter)
+        if (_viewModel.IsTextLayer)
         {
-            _layer.TextContent = TextContentTextBox.Text ?? "";
-            _layer.FontFamily = FontFamilyTextBox.Text ?? "Arial";
-            _layer.FontSize = (int)(FontSizeNumeric.Value ?? 48);
-            _layer.FontColor = FontColorTextBox.Text ?? "#FFFFFF";
-            
-            _layer.FontStyle = (FontStyleComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Normal";
-            _layer.FontWeight = (FontWeightComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Normal";
-            _layer.TextAlignment = (TextAlignmentComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Left";
+            _viewModel.TextContent = TextContentTextBox.Text ?? "";
+            _viewModel.FontFamily = FontFamilyTextBox.Text ?? "Arial";
+            _viewModel.FontSize = (int)(FontSizeNumeric.Value ?? 48);
+            _viewModel.FontColor = FontColorTextBox.Text ?? "#FFFFFF";
+            _viewModel.FontStyle = (FontStyleComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Normal";
+            _viewModel.FontWeight = (FontWeightComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Normal";
+            _viewModel.TextAlignment = (TextAlignmentComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Left";
         }
-        else if (_layer.Type == LayerType.Image || _layer.Type == LayerType.VideoFile)
+        else if (_viewModel.IsFileLayer)
         {
-            _layer.FilePath = FilePathTextBox.Text ?? "";
+            _viewModel.FilePath = FilePathTextBox.Text ?? "";
         }
-        else if (_layer.Type == LayerType.Camera)
+        else if (_viewModel.IsCameraLayer)
         {
             if (WebcamComboBox.SelectedItem is WebcamSource webcam)
-            {
-                _layer.SourceId = webcam.Id;
-            }
+                _viewModel.SelectedWebcam = webcam;
         }
 
+        _viewModel.Save();
         Close();
     }
 

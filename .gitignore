@@ -37,6 +37,7 @@ obj/x64/
 [Rr]eleases/x86/
 bin/x86/
 obj/x86/
+bin
 
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
@@ -440,3 +441,8 @@ records.db
 /src/Zenith.Interop/zenith_native.lib
 /src/Zenith.Interop/zenith_native.exp
 /src/Zenith.Interop/zenith_native.obj
+/src/Zenith.Interop/libzenith_native.so
+/src/Zenith.Interop/libzenith_native.dylib
+
+# FFmpeg shared libraries (downloaded at build time)
+/lib/ffmpeg/

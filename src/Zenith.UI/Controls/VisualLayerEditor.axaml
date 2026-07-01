@@ -42,6 +42,7 @@
                 <Style Selector="ContentPresenter" x:DataType="core:VideoLayer">
                     <Setter Property="Canvas.Left" Value="{Binding X}" />
                     <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                    <Setter Property="Canvas.ZIndex" Value="{Binding ZOrder}" />
                 </Style>
             </ItemsControl.Styles>
             

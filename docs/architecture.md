@@ -68,12 +68,6 @@ Zenith/
     │   ├── RecordingWidget.axaml  # Floating mini toolbar during recording
     │   ├── CountdownOverlay.axaml # 3-2-1 countdown screen overlay
     │   └── RegionSelectOverlay.axaml # Overlay for selecting a custom capture region
-    │
-    ├── Zenith.PoC.Windows/    # Proof of Concept for Windows-specific features
-    ├── Zenith.PoC.Linux/      # Proof of Concept for Linux (X11/Wayland)
-    ├── Zenith.PoC.macOS/      # Proof of Concept for macOS (AVFoundation)
-    ├── TestFfmpegApp/         # C# test app for FFmpeg features
-    └── TestRunner/            # Console application for isolated interop tests
 ```
 
 ---

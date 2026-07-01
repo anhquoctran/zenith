@@ -5,6 +5,12 @@
 
     <Application.Styles>
         <FluentTheme />
+        <Style Selector="Window">
+            <Setter Property="FontFamily" Value="Inter, Segoe UI, Arial, Microsoft YaHei, Malgun Gothic, Meiryo, sans-serif" />
+        </Style>
+        <Style Selector="UserControl">
+            <Setter Property="FontFamily" Value="Inter, Segoe UI, Arial, Microsoft YaHei, Malgun Gothic, Meiryo, sans-serif" />
+        </Style>
     </Application.Styles>
 
     <Application.Resources>

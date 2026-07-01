@@ -66,6 +66,7 @@ public partial class VisualLayerItem : UserControl
         ScreenImage.IsVisible = false;
         MediaImage.IsVisible = false;
         TextDisplay.IsVisible = false;
+        CameraPlaceholder.IsVisible = false;
         if (!TextEditor.IsVisible) TextEditor.IsVisible = false;
 
         switch (_layer.Type)
@@ -88,21 +89,16 @@ public partial class VisualLayerItem : UserControl
                 break;
 
             case LayerType.Camera:
+                CameraPlaceholder.IsVisible = true;
+                CameraPlaceholderText.Text = string.IsNullOrEmpty(_layer.Name) ? "Camera" : _layer.Name;
+                break;
+
             case LayerType.FpsCounter:
-                // We show placeholders or let the overlay handle them.
-                // For preview, maybe just a text placeholder
-                if (_layer.Type == LayerType.FpsCounter)
-                {
-                    TextDisplay.IsVisible = true;
-                    TextDisplay.Text = "FPS: 60";
-                    ApplyTextFormatting();
-                }
-                else
-                {
-                    TextDisplay.IsVisible = true;
-                    TextDisplay.Text = "[Camera Preview]";
-                    TextDisplay.Foreground = Brushes.White;
-                }
+                TextDisplay.IsVisible = true;
+                TextDisplay.Text = "FPS: 60";
+                TextDisplay.Foreground = Brushes.LimeGreen;
+                TextDisplay.Background = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0));
+                ApplyTextFormatting();
                 break;
 
             case LayerType.Text:

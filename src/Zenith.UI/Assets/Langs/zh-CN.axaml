@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
     <system:String x:Key="Menu_File">文件(_F)</system:String>
@@ -198,7 +198,6 @@
     <system:String x:Key="Auto_WebcamDevice">网络摄像头设备</system:String>
     <system:String x:Key="Auto_ZenithScreenRecorder">Zenith 屏幕录像机</system:String>
     <system:String x:Key="Auto_ShowMainWindow">显示主窗口</system:String>
-    <system:String x:Key="Auto_StopRecording">停止录制</system:String>
     <system:String x:Key="Auto_Exit">退出</system:String>
     <system:String x:Key="Auto_BringtoFront">置于顶层</system:String>
     <system:String x:Key="Auto_SendtoBack">置于底层</system:String>
@@ -208,8 +207,6 @@
     <system:String x:Key="Auto_Delete">删除</system:String>
     <system:String x:Key="Auto_Pause">暂停</system:String>
     <system:String x:Key="Auto_xf04c">&amp;#xf04c;</system:String>
-    <system:String x:Key="Auto_Stop">停止</system:String>
-    <system:String x:Key="Auto_xf04d">&amp;#xf04d;</system:String>
     <system:String x:Key="Auto_Snapshot">截图</system:String>
     <system:String x:Key="Auto_SelectSaveLocation">选择保存位置</system:String>
     <system:String x:Key="Auto_SystemAudioDefault">系统音频 (默认)</system:String>
