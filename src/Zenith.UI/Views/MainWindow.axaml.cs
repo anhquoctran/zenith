@@ -193,7 +193,8 @@ public partial class MainWindow : Window
             if (_previewWinBmp == null || _previewWinBmp.Width != captureRect.Width || _previewWinBmp.Height != captureRect.Height)
             {
                 _previewWinBmp?.Dispose();
-                _previewAvaloniaBmp?.Dispose();
+                // Do NOT manually dispose _previewAvaloniaBmp here because the Avalonia render thread might be actively drawing it.
+                // Let the garbage collector handle it safely.
                 
                 _previewWinBmp = new System.Drawing.Bitmap(captureRect.Width, captureRect.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 _previewAvaloniaBmp = new Avalonia.Media.Imaging.WriteableBitmap(
@@ -205,9 +206,7 @@ public partial class MainWindow : Window
 
             if (PreviewImage != null && PreviewImage.Source != _previewAvaloniaBmp)
             {
-                var old = PreviewImage.Source as IDisposable;
                 PreviewImage.Source = _previewAvaloniaBmp;
-                if (old != _previewAvaloniaBmp && old != null) old.Dispose();
             }
 
             using (var g = System.Drawing.Graphics.FromImage(_previewWinBmp))
