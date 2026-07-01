@@ -152,7 +152,7 @@ public partial class VisualLayerItem : UserControl
         }
     }
 
-    private void TextDisplay_DoubleTapped(object? sender, TappedEventArgs e)
+    public void BeginInlineEdit()
     {
         if (_layer != null && _layer.Type == LayerType.Text)
         {
@@ -161,8 +161,13 @@ public partial class VisualLayerItem : UserControl
             TextEditor.Focus();
             // Select all text to make it easy to type over
             TextEditor.SelectAll();
-            e.Handled = true;
         }
+    }
+
+    private void TextDisplay_DoubleTapped(object? sender, TappedEventArgs e)
+    {
+        BeginInlineEdit();
+        e.Handled = true;
     }
 
     private void TextEditor_LostFocus(object? sender, RoutedEventArgs e)

@@ -9,6 +9,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using System.Text.Json;
 using Zenith.Core;
 
@@ -29,8 +30,8 @@ public partial class VisualLayerEditor : UserControl
     private static string? _clipboardJson;
     
     // Adorner visuals
-    private Rectangle? _selectionBox;
-    private Rectangle[] _resizeHandles = new Rectangle[8];
+    private readonly Rectangle? _selectionBox;
+    private readonly Rectangle[] _resizeHandles = new Rectangle[8];
 
     public VisualLayerEditor()
     {
@@ -41,14 +42,15 @@ public partial class VisualLayerEditor : UserControl
         {
             Stroke = new SolidColorBrush(Color.Parse("#007ACC")),
             StrokeThickness = 2,
-            StrokeDashArray = new Avalonia.Collections.AvaloniaList<double> { 4, 4 },
+            StrokeDashArray = [4, 4],
             Fill = new SolidColorBrush(Color.FromArgb(30, 0, 122, 204)),
             IsHitTestVisible = true,
             Cursor = new Cursor(StandardCursorType.SizeAll)
         };
         _selectionBox.PointerPressed += SelectionBox_PointerPressed;
+        _selectionBox.DoubleTapped += SelectionBox_DoubleTapped;
         
-        for (int i = 0; i < 8; i++)
+        for (var i = 0; i < 8; i++)
         {
             _resizeHandles[i] = new Rectangle
             {
@@ -61,7 +63,7 @@ public partial class VisualLayerEditor : UserControl
             };
             
             // Assign cursors based on position
-            StandardCursorType cursorType = StandardCursorType.Arrow;
+            var cursorType = StandardCursorType.Arrow;
             switch(i)
             {
                 case 0: cursorType = StandardCursorType.TopLeftCorner; break; // TL
@@ -75,7 +77,7 @@ public partial class VisualLayerEditor : UserControl
             }
             _resizeHandles[i].Cursor = new Cursor(cursorType);
             
-            int handleIndex = i;
+            var handleIndex = i;
             _resizeHandles[i].PointerPressed += (s, e) => Handle_PointerPressed(s, e, handleIndex);
         }
 
@@ -89,6 +91,7 @@ public partial class VisualLayerEditor : UserControl
     public void Setup(ObservableCollection<VideoLayer> layers)
     {
         VideoLayers = layers;
+        LayersItemsControl.ItemsSource = VideoLayers;
         VideoLayers.CollectionChanged += VideoLayers_CollectionChanged;
         AttachPropertyListeners();
     }
@@ -139,7 +142,7 @@ public partial class VisualLayerEditor : UserControl
             if (EditorCanvas.Children.Contains(_selectionBox!))
             {
                 EditorCanvas.Children.Remove(_selectionBox!);
-                for (int i = 0; i < 8; i++) EditorCanvas.Children.Remove(_resizeHandles[i]);
+                for (var i = 0; i < 8; i++) EditorCanvas.Children.Remove(_resizeHandles[i]);
             }
             return;
         }
@@ -147,13 +150,13 @@ public partial class VisualLayerEditor : UserControl
         if (!EditorCanvas.Children.Contains(_selectionBox!))
         {
             EditorCanvas.Children.Add(_selectionBox!);
-            for (int i = 0; i < 8; i++) EditorCanvas.Children.Add(_resizeHandles[i]);
+            for (var i = 0; i < 8; i++) EditorCanvas.Children.Add(_resizeHandles[i]);
         }
 
-        double scaledX = _selectedLayer.X * ScaleX;
-        double scaledY = _selectedLayer.Y * ScaleY;
-        double scaledW = _selectedLayer.Width * ScaleX;
-        double scaledH = _selectedLayer.Height * ScaleY;
+        var scaledX = _selectedLayer.X * ScaleX;
+        var scaledY = _selectedLayer.Y * ScaleY;
+        var scaledW = _selectedLayer.Width * ScaleX;
+        var scaledH = _selectedLayer.Height * ScaleY;
 
         Canvas.SetLeft(_selectionBox!, scaledX);
         Canvas.SetTop(_selectionBox!, scaledY);
@@ -185,6 +188,24 @@ public partial class VisualLayerEditor : UserControl
         e.Handled = true;
     }
 
+    private void SelectionBox_DoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (_selectedLayer != null && _selectedLayer.Type == LayerType.Text)
+        {
+            // Find the VisualLayerItem container
+            var container = LayersItemsControl.ContainerFromIndex(VideoLayers!.IndexOf(_selectedLayer));
+            if (container != null)
+            {
+                var visualItem = container.GetVisualDescendants().OfType<VisualLayerItem>().FirstOrDefault();
+                if (visualItem != null)
+                {
+                    visualItem.BeginInlineEdit();
+                }
+            }
+            e.Handled = true;
+        }
+    }
+
     private void Handle_PointerPressed(object? sender, PointerPressedEventArgs e, int handleIndex)
     {
         if (_selectedLayer == null) return;
@@ -199,12 +220,12 @@ public partial class VisualLayerEditor : UserControl
         if (VideoLayers == null) return;
         
         var pos = e.GetPosition(EditorCanvas);
-        double unscaledX = pos.X / ScaleX;
-        double unscaledY = pos.Y / ScaleY;
+        var unscaledX = pos.X / ScaleX;
+        var unscaledY = pos.Y / ScaleY;
 
         // Find topmost layer that intersects
         VideoLayer? clickedLayer = null;
-        for (int i = VideoLayers.Count - 1; i >= 0; i--)
+        for (var i = VideoLayers.Count - 1; i >= 0; i--)
         {
             var layer = VideoLayers[i];
             if (!layer.IsVisible) continue;
@@ -223,7 +244,7 @@ public partial class VisualLayerEditor : UserControl
         }
         else
         {
-            if (_selectedLayer != null) _selectedLayer.IsSelected = false;
+            _selectedLayer?.IsSelected = false;
         }
     }
 
@@ -232,8 +253,8 @@ public partial class VisualLayerEditor : UserControl
         if (_selectedLayer == null) return;
 
         var currentPos = e.GetPosition(EditorCanvas);
-        double dx = (currentPos.X - _lastMousePosition.X) / ScaleX;
-        double dy = (currentPos.Y - _lastMousePosition.Y) / ScaleY;
+        var dx = (currentPos.X - _lastMousePosition.X) / ScaleX;
+        var dy = (currentPos.Y - _lastMousePosition.Y) / ScaleY;
 
         if (_isDragging)
         {
@@ -243,8 +264,8 @@ public partial class VisualLayerEditor : UserControl
         }
         else if (_isResizing)
         {
-            int dxInt = (int)dx;
-            int dyInt = (int)dy;
+            var dxInt = (int)dx;
+            var dyInt = (int)dy;
             
             switch (_resizeHandle)
             {
@@ -295,7 +316,7 @@ public partial class VisualLayerEditor : UserControl
     {
         if (VideoLayers == null) return;
 
-        bool ctrl = (e.KeyModifiers & KeyModifiers.Control) != 0;
+        var ctrl = (e.KeyModifiers & KeyModifiers.Control) != 0;
 
         if (e.Key == Key.Delete || e.Key == Key.Back)
         {

@@ -140,7 +140,8 @@ public partial class MainWindow : Window
                 var handle = this.TryGetPlatformHandle()?.Handle;
                 if (handle.HasValue && handle.Value != IntPtr.Zero)
                 {
-                    SetWindowDisplayAffinity(handle.Value, WDA_EXCLUDEFROMCAPTURE);
+                    // WDA_NONE = 0x00000000; ensure it is fully visible initially
+                    SetWindowDisplayAffinity(handle.Value, 0x00000000);
                 }
             }
             catch { }
@@ -467,70 +468,84 @@ public partial class MainWindow : Window
 
     private async void RecordButton_Click(object? sender, RoutedEventArgs e)
     {
-        HardwareAccelerationCheckBox.IsEnabled = false;
-        GpuComboBox.IsEnabled = false;
-        SelectFolderButton?.IsEnabled = false;
-
-        var dir = SaveLocationTextBox.Text;
-        if (string.IsNullOrEmpty(dir)) dir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-        Directory.CreateDirectory(dir);
-        var filename = Path.Combine(dir, $"Recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
-        
-        var config = new RecordingConfig
+        if (_recorderEngine.State == RecorderState.Idle)
         {
-            OutputPath = filename,
-            Framerate = 60,
-            UseHardwareAcceleration = HardwareAccelerationCheckBox.IsChecked == true,
-            SelectedGpuId = (GpuComboBox.SelectedItem as GPUDevice)?.Id ?? "Auto"
-        };
-        
-        // Copy current layers into config
-        foreach(var vl in VideoLayers) config.VideoLayers.Add(vl);
-        foreach(var al in AudioLayers) config.AudioLayers.Add(al);
-
-        var baseLayer = VideoLayers.Count > 0 ? VideoLayers[0] : null;
-        if (baseLayer != null && baseLayer.Type == LayerType.Screen)
-        {
-            config.Width = baseLayer.Width > 0 ? baseLayer.Width : 1920;
-            config.Height = baseLayer.Height > 0 ? baseLayer.Height : 1080;
-        }
-        else
-        {
-            config.Width = 1920;
-            config.Height = 1080;
-        }
-        
-        // Show countdown overlay before recording
-        var countdownRegion = new System.Drawing.Rectangle(0, 0, config.Width, config.Height);
-        var countdown = new CountdownOverlay(countdownRegion);
-        countdown.Show();
-        await countdown.RunCountdownAsync();
-        
-        await _recorderEngine.InitializeAsync(config);
-        await _recorderEngine.StartAsync();
-
-        _currentConfig = config;
-        _recordingStartTime = DateTime.Now;
-        _elapsedTimer.Start();
-
-        RecordButton.IsEnabled = false;
-        StopButton.IsEnabled = true;
-
-        // Spawn overlays for Camera and FPS Counter
-        foreach (var layer in config.VideoLayers)
-        {
-            if (layer.Type == LayerType.Camera || layer.Type == LayerType.FpsCounter)
+#if WINDOWS
+            try
             {
-                if (layer.IsVisible)
+                var handle = this.TryGetPlatformHandle()?.Handle;
+                if (handle.HasValue && handle.Value != IntPtr.Zero)
                 {
-                    var overlay = new LayerOverlayWindow(layer);
-                    overlay.Show();
-                    _activeOverlays.Add(overlay);
+                    SetWindowDisplayAffinity(handle.Value, 0x00000001); // WDA_EXCLUDEFROMCAPTURE
                 }
             }
-        }
+            catch { }
+#endif
+            HardwareAccelerationCheckBox.IsEnabled = false;
+            GpuComboBox.IsEnabled = false;
+            SelectFolderButton?.IsEnabled = false;
 
-        ShowWidget_Click(null, null);
+            var dir = SaveLocationTextBox.Text;
+            if (string.IsNullOrEmpty(dir)) dir = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+            Directory.CreateDirectory(dir);
+            var filename = Path.Combine(dir, $"Recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
+            
+            var config = new RecordingConfig
+            {
+                OutputPath = filename,
+                Framerate = 60,
+                UseHardwareAcceleration = HardwareAccelerationCheckBox.IsChecked == true,
+                SelectedGpuId = (GpuComboBox.SelectedItem as GPUDevice)?.Id ?? "Auto"
+            };
+            
+            // Copy current layers into config
+            foreach(var vl in VideoLayers) config.VideoLayers.Add(vl);
+            foreach(var al in AudioLayers) config.AudioLayers.Add(al);
+
+            var baseLayer = VideoLayers.Count > 0 ? VideoLayers[0] : null;
+            if (baseLayer != null && baseLayer.Type == LayerType.Screen)
+            {
+                config.Width = baseLayer.Width > 0 ? baseLayer.Width : 1920;
+                config.Height = baseLayer.Height > 0 ? baseLayer.Height : 1080;
+            }
+            else
+            {
+                config.Width = 1920;
+                config.Height = 1080;
+            }
+            
+            // Show countdown overlay before recording
+            var countdownRegion = new System.Drawing.Rectangle(0, 0, config.Width, config.Height);
+            var countdown = new CountdownOverlay(countdownRegion);
+            countdown.Show();
+            await countdown.RunCountdownAsync();
+            
+            await _recorderEngine.InitializeAsync(config);
+            await _recorderEngine.StartAsync();
+
+            _currentConfig = config;
+            _recordingStartTime = DateTime.Now;
+            _elapsedTimer.Start();
+
+            RecordButton.IsEnabled = false;
+            StopButton.IsEnabled = true;
+
+            // Spawn overlays for Camera and FPS Counter
+            foreach (var layer in config.VideoLayers)
+            {
+                if (layer.Type == LayerType.Camera || layer.Type == LayerType.FpsCounter)
+                {
+                    if (layer.IsVisible)
+                    {
+                        var overlay = new LayerOverlayWindow(layer);
+                        overlay.Show();
+                        _activeOverlays.Add(overlay);
+                    }
+                }
+            }
+
+            ShowWidget_Click(null, null);
+        }
     }
 
     private void StopButton_Click(object? sender, RoutedEventArgs e)
@@ -550,6 +565,17 @@ public partial class MainWindow : Window
         _elapsedTimer.Stop();
         ElapsedTimeText.Text = "00:00:00";
         await _recorderEngine.StopAsync();
+#if WINDOWS
+        try
+        {
+            var handle = this.TryGetPlatformHandle()?.Handle;
+            if (handle.HasValue && handle.Value != IntPtr.Zero)
+            {
+                SetWindowDisplayAffinity(handle.Value, 0x00000000); // WDA_NONE
+            }
+        }
+        catch { }
+#endif
         
         // Close and cleanup active overlays
         foreach (var overlay in _activeOverlays)
