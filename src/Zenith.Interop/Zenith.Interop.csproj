@@ -54,7 +54,7 @@
     <Exec Command="powershell.exe -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\scripts\download-ffmpeg.ps1&quot; -Platform win-x64" />
   </Target>
 
-  <Target Name="DownloadFFmpegLinux" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOSPlatform('Linux')) And !Exists('$(MSBuildProjectDirectory)/../../lib/ffmpeg/linux-x64/avcodec-63.so')">
+  <Target Name="DownloadFFmpegLinux" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOSPlatform('Linux')) And !Exists('$(MSBuildProjectDirectory)/../../lib/ffmpeg/linux-x64/libavcodec.so')">
     <Exec Command="bash &quot;$(MSBuildProjectDirectory)/../../scripts/download-ffmpeg.sh&quot; linux-x64" />
   </Target>
 

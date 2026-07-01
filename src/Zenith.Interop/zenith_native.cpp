@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include <windows.h>
 #include <dxgi.h>
 #include <mmdeviceapi.h> // Left for now, in case other things need COM
@@ -218,3 +219,10 @@ extern "C" {
         return g_LastJsonResult.c_str();
     }
 }
+#else
+extern "C" {
+    const char* GetAvailableSources() {
+        return "[]";
+    }
+}
+#endif

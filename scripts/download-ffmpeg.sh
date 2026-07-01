@@ -15,7 +15,7 @@ LIB_DIR="$PROJECT_ROOT/lib/ffmpeg"
 FFMPEG_VERSION="n7.1"
 BASE_URL="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
 
-REQUIRED_LIBS=("avcodec-63" "avdevice-63" "avfilter-12" "avformat-63" "avutil-61" "swresample-7" "swscale-10")
+
 
 check_ffmpeg_present() {
     local dir="$1"
@@ -29,6 +29,7 @@ check_ffmpeg_present() {
 
 case "$PLATFORM" in
     win-x64)
+        REQUIRED_LIBS=("avcodec-63" "avdevice-63" "avfilter-12" "avformat-63" "avutil-61" "swresample-7" "swscale-10")
         OUTPUT_DIR="$LIB_DIR/win-x64"
         if command -v curl &> /dev/null; then
             URL=$(curl -s https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest | grep -o 'https://[^"]*win64-gpl-shared-7\.1\.zip' | head -n 1)
@@ -38,6 +39,7 @@ case "$PLATFORM" in
         EXT=".dll"
         ;;
     linux-x64)
+        REQUIRED_LIBS=("libavcodec" "libavdevice" "libavfilter" "libavformat" "libavutil" "libswresample" "libswscale")
         OUTPUT_DIR="$LIB_DIR/linux-x64"
         if command -v curl &> /dev/null; then
             URL=$(curl -s https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest | grep -o 'https://[^"]*linux64-gpl-shared-7\.1\.tar\.xz' | head -n 1)
