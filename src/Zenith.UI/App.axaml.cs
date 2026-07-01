@@ -10,7 +10,10 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        Zenith.UI.Utils.ConfigManager.LoadConfig();
+        if (!Avalonia.Controls.Design.IsDesignMode)
+        {
+            Zenith.UI.Utils.ConfigManager.LoadConfig();
+        }
     }
 
     public override void OnFrameworkInitializationCompleted()

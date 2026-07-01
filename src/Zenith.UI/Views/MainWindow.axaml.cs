@@ -67,6 +67,9 @@ public partial class MainWindow : Window
         
         InitializeComponent();
 
+        if (Avalonia.Controls.Design.IsDesignMode)
+            return;
+
         LayerEditor.Setup(vm.VideoLayers);
 
         VideoLayersListBox.ItemsSource = vm.VideoLayers;

@@ -6,6 +6,7 @@
         <entry key="Zenith.UI/App.axaml" value="Zenith.UI/Zenith.UI.csproj" />
         <entry key="Zenith.UI/Views/LayerOverlayWindow.axaml" value="Zenith.UI/Zenith.UI.csproj" />
         <entry key="Zenith.UI/Views/LayerPropertiesWindow.axaml" value="Zenith.UI/Zenith.UI.csproj" />
+        <entry key="Zenith.UI/Views/MainWindow.axaml" value="Zenith.UI/Zenith.UI.csproj" />
       </map>
     </option>
   </component>

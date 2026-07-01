@@ -116,6 +116,9 @@ public class MainWindowViewModel : ViewModelBase
     public bool CanRecord => !IsRecording;
     public bool CanStop => IsRecording;
     
+    public bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    public bool IsNotWindows => !IsWindows;
+    
     private bool _hasHistory;
     public bool HasHistory
     {
@@ -220,6 +223,38 @@ public class MainWindowViewModel : ViewModelBase
     
     public MainWindowViewModel()
     {
+        if (Avalonia.Controls.Design.IsDesignMode)
+        {
+            AppVersion = "Zenith v1.0.0 (Design)";
+            FFmpegVersion = "FFmpeg vX.X (Design)";
+            ElapsedTime = "00:15:30";
+            CpuUsage = "CPU: 12.5%";
+            MemUsage = "Mem: 150 MB";
+            GpuUsage = "GPU: 5.0%";
+            VideoLayers.Add(new VideoLayer { Name = "Screen 1", Type = LayerType.Screen });
+            AudioLayers.Add(new AudioLayer { Name = "System Audio", Type = AudioLayerType.SystemAudio });
+            GpuDevices = [new GPUDevice { Name = "Auto", Id = "Auto" }];
+            AudioDevices = [new AudioSource { Name = "Default Audio", Id = "def" }];
+            
+            _recorderEngine = null!;
+            _audioEngine = null!;
+            _recordRepository = null!;
+            _deviceEnumerator = null!;
+            _hardwareMonitor = null!;
+            _elapsedTimer = null!;
+            _statsTimer = null!;
+            
+            AddVideoLayerCommand = null!;
+            RemoveVideoLayerCommand = null!;
+            MoveUpVideoLayerCommand = null!;
+            MoveDownVideoLayerCommand = null!;
+            AddAudioLayerCommand = null!;
+            RemoveAudioLayerCommand = null!;
+            RefreshHistoryCommand = null!;
+            ClearHistoryCommand = null!;
+            return;
+        }
+
         // Initialize services
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             _deviceEnumerator = new WindowsDeviceEnumerator();
