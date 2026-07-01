@@ -110,11 +110,9 @@ public partial class LayerPropertiesWindow : Window
         
         foreach (ComboBoxItem item in comboBox.Items)
         {
-            if (item.Content?.ToString() == value)
-            {
-                comboBox.SelectedItem = item;
-                break;
-            }
+            if (item.Content?.ToString() != value) continue;
+            comboBox.SelectedItem = item;
+            break;
         }
     }
 }

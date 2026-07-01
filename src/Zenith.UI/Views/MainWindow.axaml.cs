@@ -22,17 +22,15 @@ public class PathToBitmapConverter : Avalonia.Data.Converters.IValueConverter
     private static readonly Dictionary<string, Avalonia.Media.Imaging.Bitmap> _cache = [];
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
-        if (value is string path && File.Exists(path))
+        if (value is not string path || !File.Exists(path)) return null;
+        if (_cache.TryGetValue(path, out var bmp)) return bmp;
+        try
         {
-            if (_cache.TryGetValue(path, out var bmp)) return bmp;
-            try
-            {
-                bmp = new Avalonia.Media.Imaging.Bitmap(path);
-                _cache[path] = bmp;
-                return bmp;
-            }
-            catch { return null; }
+            bmp = new Avalonia.Media.Imaging.Bitmap(path);
+            _cache[path] = bmp;
+            return bmp;
         }
+        catch { return null; }
         return null;
     }
 

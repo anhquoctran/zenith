@@ -1,5 +1,4 @@
 using Avalonia;
-using Zenith.UI.Controls;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -31,7 +30,7 @@ public partial class LayerOverlayWindow : Window
         Width = layer.Width > 0 ? layer.Width : 256;
         Height = layer.Height > 0 ? layer.Height : 144;
         
-        if (layer.X >= 0 && layer.Y >= 0)
+        if (layer is { X: >= 0, Y: >= 0 })
         {
             Position = new PixelPoint(layer.X, layer.Y);
         }
@@ -57,7 +56,7 @@ public partial class LayerOverlayWindow : Window
             try
             {
                 // Try to start webcam
-                string deviceId = string.IsNullOrEmpty(_layer.SourceId) ? "video=Integrated Webcam" : _layer.SourceId;
+                var deviceId = string.IsNullOrEmpty(_layer.SourceId) ? "video=Integrated Webcam" : _layer.SourceId;
                 _webcam.Start(deviceId);
             }
             catch (Exception ex)
@@ -162,12 +161,10 @@ public partial class LayerOverlayWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
-        
-        if (_webcam != null)
-        {
-            _webcam.FrameArrived -= OnWebcamFrame;
-            _webcam.Dispose();
-            _webcam = null;
-        }
+
+        if (_webcam == null) return;
+        _webcam.FrameArrived -= OnWebcamFrame;
+        _webcam.Dispose();
+        _webcam = null;
     }
 }

@@ -30,12 +30,20 @@ check_ffmpeg_present() {
 case "$PLATFORM" in
     win-x64)
         OUTPUT_DIR="$LIB_DIR/win-x64"
-        URL="$BASE_URL/ffmpeg-${FFMPEG_VERSION}-win64-shared.zip"
+        if command -v curl &> /dev/null; then
+            URL=$(curl -s https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest | grep -o 'https://[^"]*win64-gpl-shared-7\.1\.zip' | head -n 1)
+        else
+            URL=$(wget -qO- https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest | grep -o 'https://[^"]*win64-gpl-shared-7\.1\.zip' | head -n 1)
+        fi
         EXT=".dll"
         ;;
     linux-x64)
         OUTPUT_DIR="$LIB_DIR/linux-x64"
-        URL="$BASE_URL/ffmpeg-${FFMPEG_VERSION}-linux64-shared.tar.xz"
+        if command -v curl &> /dev/null; then
+            URL=$(curl -s https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest | grep -o 'https://[^"]*linux64-gpl-shared-7\.1\.tar\.xz' | head -n 1)
+        else
+            URL=$(wget -qO- https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest | grep -o 'https://[^"]*linux64-gpl-shared-7\.1\.tar\.xz' | head -n 1)
+        fi
         EXT=".so"
         ;;
     osx-arm64)
